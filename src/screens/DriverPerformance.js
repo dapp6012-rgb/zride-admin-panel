@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ban, Check, Search, Star, Wallet, X } from 'lucide-react';
-
 import { API_BASE_URL as API_URL } from '../lib/api';
+import { exportToExcel } from '../utils/exportExcel';
 
 const numberValue = value => Number(value) || 0;
 const performanceScore = driver =>
@@ -12,15 +12,15 @@ const performanceScore = driver =>
 
 function DriverAvatar({ driver, size = 'large' }) {
   const initials = (driver.name || 'Driver')
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map(part => part[0])
-    .join('')
-    .toUpperCase();
+   .trim()
+   .split(/\s+/)
+   .slice(0, 2)
+   .map(part => part[0])
+   .join('')
+   .toUpperCase();
 
   return (
-    <div className={`grid shrink-0 place-items-center rounded-full bg-[#A7E92F] font-extrabold text-black ${size === 'small' ? 'h-11 w-11 text-sm' : 'h-14 w-14 text-lg'}`}>
+    <div className={`grid shrink-0 place-items-center rounded-full bg-[#A7E92F] font-extrabold text-black ${size === 'small'? 'h-11 w-11 text-sm' : 'h-14 w-14 text-lg'}`}>
       {initials || 'D'}
     </div>
   );
@@ -97,7 +97,6 @@ export default function DriverPerformance() {
 
   useEffect(() => {
     const controller = new AbortController();
-
     async function fetchDrivers() {
       try {
         const response = await fetch(`${API_URL}/api/driver/all`, { signal: controller.signal });
@@ -106,12 +105,11 @@ export default function DriverPerformance() {
         if (!Array.isArray(data.drivers)) throw new Error('Unexpected response from driver API');
         setDrivers(data.drivers);
       } catch (fetchError) {
-        if (fetchError.name !== 'AbortError') setError('Unable to load drivers. Check that the API is running and try again.');
+        if (fetchError.name!== 'AbortError') setError('Unable to load drivers. Check that the API is running and try again.');
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     }
-
     fetchDrivers();
     return () => controller.abort();
   }, []);
@@ -121,11 +119,29 @@ export default function DriverPerformance() {
     [drivers],
   );
   const filteredDrivers = rankedDrivers
-    .map((driver, index) => ({ driver, rank: index + 1 }))
-    .filter(({ driver }) => {
+   .map((driver, index) => ({ driver, rank: index + 1 }))
+   .filter(({ driver }) => {
       const query = search.trim().toLowerCase();
-      return !query || driver.name?.toLowerCase().includes(query) || driver.phone?.toLowerCase().includes(query);
+      return!query || driver.name?.toLowerCase().includes(query) || driver.phone?.toLowerCase().includes(query);
     });
+
+  const handleExportExcel = () => {
+    const formatted = filteredDrivers.map(({ driver, rank }) => ({
+      Rank: rank,
+      DriverID: driver.driverId || '-',
+      Name: driver.name || 'Unnamed driver',
+      Phone: driver.phone || '-',
+      Rating: driver.rating,
+      TotalRides: driver.totalRides,
+      CompletedRides: driver.completedRides,
+      CancelledRides: driver.cancelledRides,
+      AcceptancePercent: driver.acceptance,
+      OnlineHours: driver.onlineHours,
+      Earnings: driver.earnings,
+      PerformanceScore: performanceScore(driver).toFixed(2)
+    }));
+    exportToExcel(formatted, `ZRide_DriverPerformance_${search || 'All'}`);
+  };
 
   return (
     <main className="min-h-[calc(100vh-72px)] bg-black px-4 py-7 text-white sm:px-7 lg:px-10">
@@ -136,24 +152,29 @@ export default function DriverPerformance() {
             <h1 className="text-3xl font-extrabold tracking-tight text-white">Driver performance</h1>
             <p className="mt-2 text-sm text-white/50">Ranked by completed rides, acceptance, ratings and cancellations.</p>
           </div>
-          <div className="relative w-full sm:max-w-sm">
-            <Search aria-hidden="true" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" size={17} />
-            <input
-              aria-label="Search drivers by name or phone"
-              className="h-12 w-full rounded-xl border border-white/15 bg-white/[0.06] pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-[#A7E92F]"
-              onChange={event => setSearch(event.target.value)}
-              placeholder="Search name or phone"
-              type="search"
-              value={search}
-            />
+          <div className="flex w-full gap-2 sm:max-w-md">
+            <div className="relative w-full">
+              <Search aria-hidden="true" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" size={17} />
+              <input
+                aria-label="Search drivers by name or phone"
+                className="h-12 w-full rounded-xl border border-white/15 bg-white/[0.06] pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-[#A7E92F]"
+                onChange={event => setSearch(event.target.value)}
+                placeholder="Search name or phone"
+                type="search"
+                value={search}
+              />
+            </div>
+            <button onClick={handleExportExcel} className="h-12 shrink-0 rounded-xl bg-green-600 hover:bg-green-700 px-4 text-sm font-bold text-white">
+              📥 Export
+            </button>
           </div>
         </header>
 
-        {loading ? (
+        {loading? (
           <div className="py-20 text-center text-sm font-semibold text-white/55" role="status">Loading drivers...</div>
-        ) : error ? (
+        ) : error? (
           <div className="rounded-2xl border border-red-400/20 bg-red-400/[0.06] px-5 py-10 text-center text-sm text-red-200" role="alert">{error}</div>
-        ) : filteredDrivers.length === 0 ? (
+        ) : filteredDrivers.length === 0? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-16 text-center">
             <p className="text-lg font-bold text-white">No drivers found</p>
             {search && <p className="mt-2 text-sm text-white/45">Try another name or phone number.</p>}
@@ -161,21 +182,21 @@ export default function DriverPerformance() {
         ) : (
           <>
             <div className="mb-4 flex items-center justify-between text-xs text-white/45">
-              <span>{filteredDrivers.length} {filteredDrivers.length === 1 ? 'driver' : 'drivers'}</span>
+              <span>{filteredDrivers.length} {filteredDrivers.length === 1? 'driver' : 'drivers'}</span>
               <span>Highest performance score first</span>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredDrivers.map(({ driver, rank }) => (
                 <button
                   aria-label={`View details for ${driver.name || 'driver'}, rank ${rank}`}
-                  className={`relative rounded-2xl border bg-[#0d0e0b] p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:border-[#A7E92F]/60 hover:bg-[#11130d] ${rank === 1 ? 'border-[#A7E92F]' : 'border-white/10'}`}
+                  className={`relative rounded-2xl border bg-[#0d0e0b] p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:border-[#A7E92F]/60 hover:bg-[#11130d] ${rank === 1? 'border-[#A7E92F]' : 'border-white/10'}`}
                   key={driver._id || driver.driverId || `${driver.name}-${rank}`}
                   onClick={() => setSelectedDriver({ driver, rank })}
                   type="button"
                 >
                   {rank <= 3 && (
-                    <span className={`absolute right-4 top-4 rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wide ${rank === 1 ? 'bg-[#A7E92F] text-black' : 'bg-white/10 text-white/75'}`}>
-                      {rank === 1 ? '🏆 TOP PERFORMER' : `#${rank} Best`}
+                    <span className={`absolute right-4 top-4 rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wide ${rank === 1? 'bg-[#A7E92F] text-black' : 'bg-white/10 text-white/75'}`}>
+                      {rank === 1? '🏆 TOP PERFORMER' : `#${rank} Best`}
                     </span>
                   )}
                   <div className="flex items-center gap-3 pr-16">

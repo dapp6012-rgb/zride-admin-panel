@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '../lib/api';
+import { exportToExcel } from '../utils/exportExcel';
 
 export default function AdminAddCityScreen({ notify }) {
   const [tab, setTab] = useState('city');
   const [countries, setCountries] = useState([]);
+  const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [countryForm, setCountryForm] = useState({ name: '', code: '', flag: '', length: '10' });
@@ -20,7 +22,15 @@ export default function AdminAddCityScreen({ notify }) {
     } catch(e) { console.log(e) }
   };
 
-  useEffect(() => { fetchCountries(); }, []);
+  const fetchCities = async () => {
+    try {
+      const res = await fetch(`${API_URL}/zones`);
+      const data = await res.json();
+      setCities(data);
+    } catch(e) { console.log(e) }
+  };
+
+  useEffect(() => { fetchCountries(); fetchCities(); }, []);
 
   const handleAddCountry = async () => {
     if(!countryForm.name || !countryForm.code || !countryForm.flag) return alert('Saare fields bharo');
@@ -71,13 +81,52 @@ export default function AdminAddCityScreen({ notify }) {
       if(notify) notify(`${cityForm.country} me ${cityForm.name} add ho gaya`);
       alert(`Success!`);
       setCityForm({ ...cityForm, name: '', lat: '', lng: '', baseFare: '', perKm: '' });
+      await fetchCities();
     } catch (e) { alert('Error: ' + e.message); }
     setLoading(false);
   };
 
+  const handleExportCountries = () => {
+    const formatted = countries.map(c => ({
+      CountryID: c._id,
+      Name: c.name,
+      Code: c.code,
+      Flag: c.flag,
+      PhoneLength: c.length,
+      CreatedAt: new Date(c.createdAt || Date.now()).toLocaleDateString()
+    }));
+    exportToExcel(formatted, "ZRide_Countries");
+  };
+
+  const handleExportCities = () => {
+    const formatted = cities.map(z => ({
+      CityID: z._id,
+      CityName: z.name || z.city,
+      Country: z.country,
+      CountryID: z.countryId,
+      Latitude: z.lat || z.latitude,
+      Longitude: z.lng || z.longitude,
+      BaseFare: z.baseFare,
+      PerKm: z.perKm,
+      IsActive: z.isActive ? "Active" : "Inactive"
+    }));
+    exportToExcel(formatted, "ZRide_Cities");
+  };
+
   return (
     <div className="p-6 max-w-xl text-white">
-      <h1 className="text-2xl font-bold mb-4 text-white">Admin Location Manager</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-white">Admin Location Manager</h1>
+        {tab === 'country' ? (
+          <button onClick={handleExportCountries} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">
+            📥 Export Excel
+          </button>
+        ) : (
+          <button onClick={handleExportCities} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">
+            📥 Export Excel
+          </button>
+        )}
+      </div>
       
       <div className="flex gap-2 mb-6 bg-white/5 p-1 rounded-lg border border-white/10">
         <button onClick={()=>setTab('country')} className={`flex-1 p-2 rounded font-bold ${tab==='country' ? 'bg-[#A7E92F] text-black' : 'text-white'}`}>+ Add Country</button>

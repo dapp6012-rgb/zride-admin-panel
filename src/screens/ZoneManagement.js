@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL as API_URL } from "../lib/api";
+import { exportToExcel } from "../utils/exportExcel";
 
 export default function ZoneManagement({ notify }) {
   const [zones, setZones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
-    name: "", city: "Karachi", baseFare: "", perKm: "", perMinute: "", surge: 1, isActive: true,
+    name: "", city: "", baseFare: "", perKm: "", perMinute: "", surge: 1, isActive: true,
     lat: "", lng: "", radius: 2000
   });
   const [editingId, setEditingId] = useState(null);
@@ -91,6 +92,23 @@ export default function ZoneManagement({ notify }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleExportExcel = () => {
+    const formatted = zones.map(z => ({
+      ZoneID: z._id,
+      Name: z.name,
+      City: z.city,
+      BaseFare: z.baseFare,
+      PerKM: z.perKm,
+      PerMinute: z.perMinute,
+      Surge: z.surge,
+      IsActive: z.isActive !== false ? 'Active' : 'Disabled',
+      Lat: z.lat,
+      Lng: z.lng,
+      RadiusMeters: z.radius
+    }));
+    exportToExcel(formatted, `ZRide_Zones_${zones.length}`);
+  };
+
   return (
     <div className="p-4 space-y-6">
       <div className="bg-[#111] border border-white/10 rounded-2xl p-5">
@@ -103,7 +121,6 @@ export default function ZoneManagement({ notify }) {
           <input type="number" className="bg-black border border-white/10 rounded-xl p-3 text-white" placeholder="Per Minute" value={form.perMinute} onChange={e=>setForm({...form, perMinute:e.target.value})} />
           <input type="number" step="0.1" className="bg-black border border-white/10 rounded-xl p-3 text-white" placeholder="Surge 1.0" value={form.surge} onChange={e=>setForm({...form, surge:e.target.value})} />
           
-          {/* REAL LOCATION FIELDS */}
           <input type="number" step="0.0001" className="bg-black border border-yellow-500/30 rounded-xl p-3 text-white" placeholder="Lat e.g 24.8138" value={form.lat} onChange={e=>setForm({...form, lat:e.target.value})} />
           <input type="number" step="0.0001" className="bg-black border border-yellow-500/30 rounded-xl p-3 text-white" placeholder="Lng e.g 67.0483" value={form.lng} onChange={e=>setForm({...form, lng:e.target.value})} />
           <input type="number" className="bg-black border border-white/10 rounded-xl p-3 text-white" placeholder="Radius 2000" value={form.radius} onChange={e=>setForm({...form, radius:e.target.value})} />
@@ -116,9 +133,12 @@ export default function ZoneManagement({ notify }) {
       </div>
 
       <div className="bg-[#111] border border-white/10 rounded-2xl p-5">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
           <h2 className="text-white font-bold">All Zones ({zones.length})</h2>
-          <button onClick={fetchZones} className="text-sm bg-white/10 px-3 py-1.5 rounded-lg text-white">Refresh</button>
+          <div className="flex gap-2">
+            <button onClick={handleExportExcel} className="text-sm bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg text-white font-bold">📥 Export Excel</button>
+            <button onClick={fetchZones} className="text-sm bg-white/10 px-3 py-1.5 rounded-lg text-white">Refresh</button>
+          </div>
         </div>
         {loading ? <p className="text-white/50">Loading...</p> : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">

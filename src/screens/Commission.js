@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
+import { exportToExcel } from '../utils/exportExcel';
 
 export default function Commission() {
   const [selectedMonth, setSelectedMonth] = useState("September 2026");
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("All"); // All, Paid, Pending, Proof
+  const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [charge, setCharge] = useState(3000);
-  const [selectedProof, setSelectedProof] = useState(null); // modal ke liye
+  const [selectedProof, setSelectedProof] = useState(null);
 
   const months = ["September 2026", "August 2026", "July 2026", "June 2026", "May 2026"];
 
@@ -29,7 +30,7 @@ export default function Commission() {
             photo: d.photo || d.profilePic || null,
             status: comm.status || "Pending",
             date: comm.date || "-",
-            proof: comm.proof || comm.proofImage || null, // <-- FIX: CommissionScreen se jo pic ayegi
+            proof: comm.proof || comm.proofImage || null,
             amount: comm.amount || charge,
             transactionId: comm.transactionId || "-",
           };
@@ -84,6 +85,22 @@ export default function Commission() {
     localStorage.setItem('zride_commission_charge', newCharge);
   };
 
+  const handleExportExcel = () => {
+    const formatted = filteredDrivers.map(d => ({
+      DriverID: d.id,
+      Name: d.name,
+      Phone: d.phone,
+      VehicleNumber: d.vehicleNumber,
+      Month: selectedMonth,
+      Amount: d.amount || charge,
+      Status: d.status,
+      PaidDate: d.date,
+      TransactionID: d.transactionId,
+      HasProof: d.proof? 'Yes' : 'No'
+    }));
+    exportToExcel(formatted, `ZRide_Commission_${selectedMonth}_${filter}`);
+  };
+
   const filteredDrivers = drivers.filter(d => {
     const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) || d.phone.includes(search) || d.vehicleNumber.toLowerCase().includes(search.toLowerCase());
     if (filter === "All") return matchSearch;
@@ -95,7 +112,6 @@ export default function Commission() {
 
   return (
     <div style={{ padding: '20px', color: '#fff' }}>
-      {/* HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h1 style={{ fontSize: '28px', fontWeight: '800' }}>Monthly Commission - Rs {charge}</h1>
@@ -106,10 +122,12 @@ export default function Commission() {
             style={{ background: 'hsl(222 28% 13%)', border: '1px solid hsl(220 20% 23%)', color: '#fff', padding: '10px 14px', borderRadius: '10px' }}>
             {months.map(m => <option key={m}>{m}</option>)}
           </select>
+          <button onClick={handleExportExcel} style={{ background: '#16a34a', border: 0, color: '#fff', padding: '10px 16px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>
+            📥 Export Excel
+          </button>
         </div>
       </div>
 
-      {/* FIX OPTION */}
       <div style={{ background: 'hsl(222 28% 13%)', border: '1px dashed #00d49a', borderRadius: '12px', padding: '14px', marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
         <div>
           <div style={{ fontWeight: '700', fontSize: '13px' }}>⚙️ Fix Commission Amount</div>
@@ -122,7 +140,6 @@ export default function Commission() {
         </div>
       </div>
 
-      {/* STATS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '15px', marginTop: '20px' }}>
         <div style={{ background: 'hsl(222 28% 13%)', border: '1px solid hsl(220 20% 23%)', borderRadius: '14px', padding: '18px' }}>
           <div style={{ opacity: 0.6, fontSize: '11px' }}>TOTAL DRIVERS</div>
@@ -142,7 +159,6 @@ export default function Commission() {
         </div>
       </div>
 
-      {/* FILTERS */}
       <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
         <input placeholder="Search driver, phone, plate..." value={search} onChange={e=>setSearch(e.target.value)} style={{ flex: 1, minWidth: '200px', background: 'hsl(222 28% 13%)', border: '1px solid hsl(220 20% 23%)', color: '#fff', padding: '10px 14px', borderRadius: '10px' }} />
         {["All", "Pending", "Proof", "Paid", "Verified"].map(f => (
@@ -150,7 +166,6 @@ export default function Commission() {
         ))}
       </div>
 
-      {/* TABLE */}
       <div style={{ marginTop: '20px', background: 'hsl(222 28% 13%)', border: '1px solid hsl(220 20% 23%)', borderRadius: '14px', padding: '10px', overflowX: 'auto' }}>
         {filteredDrivers.length === 0? (
           <div style={{ textAlign: 'center', padding: '40px', opacity: 0.7 }}>Koi driver nahi mila</div>
@@ -207,7 +222,6 @@ export default function Commission() {
         )}
       </div>
 
-      {/* PROOF MODAL - FIX WALA */}
       {selectedProof && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }} onClick={()=>setSelectedProof(null)}>
           <div style={{ background: '#1a1f2e', borderRadius: '16px', padding: '20px', maxWidth: '400px', width: '100%', border: '1px solid #2a3245' }} onClick={e=>e.stopPropagation()}>

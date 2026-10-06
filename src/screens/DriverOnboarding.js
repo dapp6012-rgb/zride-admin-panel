@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Badge, Button, DataScreen, SectionCard, ScreenFrame } from '../components/ControlRoom';
-
 import { API_BASE_URL as API_URL } from '../lib/api';
+import { exportToExcel } from '../utils/exportExcel';
 
 export default function DriverOnboarding({ notify }) {
   const [applicants, setApplicants] = useState([]);
@@ -19,7 +19,7 @@ export default function DriverOnboarding({ notify }) {
   useEffect(() => { fetchDrivers(); const id = setInterval(fetchDrivers, 5000); return () => clearInterval(id); }, []);
 
   const handleAction = async (driverId, status) => {
-    const nextStatus = status === 'rejected' ? 'rejected' : 'approved';
+    const nextStatus = status === 'rejected'? 'rejected' : 'approved';
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/admin/drivers/${encodeURIComponent(driverId)}/approve`, {
@@ -28,10 +28,10 @@ export default function DriverOnboarding({ notify }) {
         body: JSON.stringify({ status: nextStatus })
       });
       const result = await res.json();
-      if (!res.ok || result.success === false || !result.driver) {
+      if (!res.ok || result.success === false ||!result.driver) {
         throw new Error(result.message || `Approval API returned ${res.status}`);
       }
-      notify(nextStatus === 'approved' ? 'Driver Approved ✅' : 'Driver Rejected ❌');
+      notify(nextStatus === 'approved'? 'Driver Approved ✅' : 'Driver Rejected ❌');
       setSelected(null);
       await fetchDrivers();
     } catch(e){ notify('Error: '+e.message) }
@@ -39,7 +39,7 @@ export default function DriverOnboarding({ notify }) {
   };
 
   const handleDelete = async (driver) => {
-    if (driver.status !== 'rejected') return;
+    if (driver.status!== 'rejected') return;
     const driverId = driver.driverId || driver.id || driver._id;
     if (!window.confirm('Delete this rejected driver permanently?')) return;
 
@@ -63,20 +63,39 @@ export default function DriverOnboarding({ notify }) {
     setLoading(false);
   };
 
-  const getPic = (obj, ...keys) => {
+  const handleExportExcel = () => {
+    const formatted = applicants.map(a => ({
+      DriverID: a.driverId || a.id || a._id,
+      Name: a.basicInfo?.name || a.name || 'Unknown',
+      Phone: a.basicInfo?.phone || a.phone || '-',
+      CNIC: a.basicInfo?.cnic || a.cnic || '-',
+      Email: a.basicInfo?.email || a.email || '-',
+      City: a.basicInfo?.city || a.city || '-',
+      VehicleType: a.vehicleInfo?.type || a.vehicleType || '-',
+      VehicleCompany: a.vehicleInfo?.company || a.make || '-',
+      VehicleModel: a.vehicleInfo?.model || a.vehicleModel || '-',
+      NumberPlate: a.vehicleInfo?.numberPlate || a.carNumber || '-',
+      LicenceNumber: a.licenceInfo?.licenceNumber || a.licenceNumber || '-',
+      Status: a.status,
+      CreatedAt: a.createdAt? new Date(a.createdAt).toLocaleString() : '-'
+    }));
+    exportToExcel(formatted, `ZRide_Drivers_${applicants.length}`);
+  };
+
+  const getPic = (obj,...keys) => {
     for (let k of keys) {
       const parts = k.split('.');
       let val = obj;
       for (let p of parts) { val = val?.[p]; }
-      if (val && typeof val === 'string' && val.length > 50 && !/^(file|content):\/\//i.test(val)) return val;
+      if (val && typeof val === 'string' && val.length > 50 &&!/^(file|content):\/\//i.test(val)) return val;
     }
     return null;
   };
 
   return (
     <div className="text-white">
-    <ScreenFrame title="Driver Verification Center" description="Real InDrive style verification - All driver docs." actions={<Button variant="primary" onClick={fetchDrivers}>🔄 Refresh</Button>}>
-      
+    <ScreenFrame title="Driver Verification Center" description="Real InDrive style verification - All driver docs." actions={<div style={{display:'flex', gap:8}}><Button variant="ghost" onClick={handleExportExcel} style={{background:'#16a34a', color:'white'}}>📥 Export Excel</Button><Button variant="primary" onClick={fetchDrivers}>🔄 Refresh</Button></div>}>
+
       <div className="grid two-col">
         <SectionCard title="Queue Status" meta="LIVE">
           <div className="grid stats" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
@@ -86,7 +105,7 @@ export default function DriverOnboarding({ notify }) {
           </div>
         </SectionCard>
         <SectionCard title="Selected Driver" meta="DETAIL">
-          {selected ? (
+          {selected? (
             <div className="text-white">
               <h3 style={{fontSize:18, fontWeight:'bold', color:'white'}}>{selected.basicInfo?.name || selected.name} - {selected.driverId}</h3>
               <p style={{color:'white', fontSize:12}}>Status: {selected.status}</p>
@@ -101,7 +120,7 @@ export default function DriverOnboarding({ notify }) {
       </div>
 
       <div style={{ marginTop: 16 }} className="text-white">
-        <DataScreen 
+        <DataScreen
           title={`All Drivers (${applicants.length})`}
           description="Driver app se real data"
           rows={applicants}
@@ -140,7 +159,7 @@ export default function DriverOnboarding({ notify }) {
             </div>
 
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginTop:20}}>
-              
+
               <div style={{background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>👤 Basic Info</h4>
                 <p style={{color:'white'}}><b style={{color:'white'}}>Name:</b> {selected.basicInfo?.name || '-'}</p>
@@ -151,22 +170,22 @@ export default function DriverOnboarding({ notify }) {
 
                 <div style={{marginTop:12}}>
                   <small style={{color:'white'}}>Basic Info Photo</small>
-                  {getPic(selected, 'basicInfo.photo', 'basicInfo.profilePhoto', 'basicInfo.driverPhoto', 'photo', 'profilePhoto', 'driverPhoto') ?
+                  {getPic(selected, 'basicInfo.photo', 'basicInfo.profilePhoto', 'basicInfo.driverPhoto', 'photo', 'profilePhoto', 'driverPhoto')?
                     <img src={getPic(selected, 'basicInfo.photo', 'basicInfo.profilePhoto', 'basicInfo.driverPhoto', 'photo', 'profilePhoto', 'driverPhoto')} alt="Basic info profile" style={{display:'block', width:140, height:140, objectFit:'cover', borderRadius:8, marginTop:4, border:'1px solid #444'}} />
                     : <div style={{background:'#333', width:140, height:100, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'white'}}>No Image</div>}
                 </div>
-                
+
                 <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:12}}>
                   <div>
                     <small style={{color:'white'}}>CNIC Front (Basic)</small>
-                    {getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'basicInfo.cnic_front', 'cnicFront', 'cnicFrontPic', 'documents.cnicFront') ? 
-                      <img src={getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'basicInfo.cnic_front', 'cnicFront', 'cnicFrontPic', 'documents.cnicFront')} style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, marginTop:4, border:'1px solid #444'}} /> 
+                    {getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'basicInfo.cnic_front', 'cnicFront', 'cnicFrontPic', 'documents.cnicFront')?
+                      <img src={getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'basicInfo.cnic_front', 'cnicFront', 'cnicFrontPic', 'documents.cnicFront')} style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, marginTop:4, border:'1px solid #444'}} />
                       : <div style={{background:'#333', height:120, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'white'}}>No Image</div>}
                   </div>
                   <div>
                     <small style={{color:'white'}}>CNIC Back (Basic)</small>
-                    {getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'basicInfo.cnic_back', 'cnicBack', 'cnicBackPic', 'documents.cnicBack') ? 
-                      <img src={getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'basicInfo.cnic_back', 'cnicBack', 'cnicBackPic', 'documents.cnicBack')} style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, marginTop:4, border:'1px solid #444'}} /> 
+                    {getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'basicInfo.cnic_back', 'cnicBack', 'cnicBackPic', 'documents.cnicBack')?
+                      <img src={getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'basicInfo.cnic_back', 'cnicBack', 'cnicBackPic', 'documents.cnicBack')} style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, marginTop:4, border:'1px solid #444'}} />
                       : <div style={{background:'#333', height:120, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'white'}}>No Image</div>}
                   </div>
                 </div>
@@ -190,18 +209,18 @@ export default function DriverOnboarding({ notify }) {
 
               <div style={{background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>🤳 Selfie with Licence</h4>
-                {getPic(selected, 'selfie', 'selfieWithLicence', 'basicInfo.selfie', 'documents.selfie') ? <img src={getPic(selected, 'selfie', 'selfieWithLicence', 'basicInfo.selfie', 'documents.selfie')} alt="selfie" style={{width:'100%', height:200, objectFit:'cover', borderRadius:8, border:'1px solid #333'}} /> : <p style={{color:'white'}}>No Selfie</p>}
+                {getPic(selected, 'selfie', 'selfieWithLicence', 'basicInfo.selfie', 'documents.selfie')? <img src={getPic(selected, 'selfie', 'selfieWithLicence', 'basicInfo.selfie', 'documents.selfie')} alt="selfie" style={{width:'100%', height:200, objectFit:'cover', borderRadius:8, border:'1px solid #333'}} /> : <p style={{color:'white'}}>No Selfie</p>}
               </div>
 
               <div style={{gridColumn:'span 2', background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>📸 All Uploaded Documents (Real Pics)</h4>
                 <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12}}>
-                  <div><small style={{color:'white'}}>CNIC Front</small><br/>{getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'cnicFront', 'cnicFrontPic') ? <img src={getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'cnicFront', 'cnicFrontPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
-                  <div><small style={{color:'white'}}>CNIC Back</small><br/>{getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'cnicBack', 'cnicBackPic') ? <img src={getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'cnicBack', 'cnicBackPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
-                  <div><small style={{color:'white'}}>Licence Front</small><br/>{getPic(selected, 'licenceInfo.licenceFrontPic', 'licenceInfo.licenceFront', 'licenceFront', 'licenceFrontPic') ? <img src={getPic(selected, 'licenceInfo.licenceFrontPic', 'licenceInfo.licenceFront', 'licenceFront', 'licenceFrontPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
-                  <div><small style={{color:'white'}}>Vehicle Front</small><br/>{getPic(selected, 'vehicleInfo.vehicleFrontPic', 'vehicleInfo.frontPic', 'vehicleFront', 'vehicleFrontPic', 'frontPic') ? <img src={getPic(selected, 'vehicleInfo.vehicleFrontPic', 'vehicleInfo.frontPic', 'vehicleFront', 'vehicleFrontPic', 'frontPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
-                  <div><small style={{color:'white'}}>Vehicle Back</small><br/>{getPic(selected, 'vehicleInfo.vehicleBackPic', 'vehicleInfo.backPic', 'vehicleBack', 'vehicleBackPic', 'backPic') ? <img src={getPic(selected, 'vehicleInfo.vehicleBackPic', 'vehicleInfo.backPic', 'vehicleBack', 'vehicleBackPic', 'backPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
-                  <div><small style={{color:'white'}}>Selfie</small><br/>{getPic(selected, 'selfie', 'selfieWithLicence') ? <img src={getPic(selected, 'selfie', 'selfieWithLicence')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
+                  <div><small style={{color:'white'}}>CNIC Front</small><br/>{getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'cnicFront', 'cnicFrontPic')? <img src={getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'cnicFront', 'cnicFrontPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
+                  <div><small style={{color:'white'}}>CNIC Back</small><br/>{getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'cnicBack', 'cnicBackPic')? <img src={getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'cnicBack', 'cnicBackPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
+                  <div><small style={{color:'white'}}>Licence Front</small><br/>{getPic(selected, 'licenceInfo.licenceFrontPic', 'licenceInfo.licenceFront', 'licenceFront', 'licenceFrontPic')? <img src={getPic(selected, 'licenceInfo.licenceFrontPic', 'licenceInfo.licenceFront', 'licenceFront', 'licenceFrontPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
+                  <div><small style={{color:'white'}}>Vehicle Front</small><br/>{getPic(selected, 'vehicleInfo.vehicleFrontPic', 'vehicleInfo.frontPic', 'vehicleFront', 'vehicleFrontPic', 'frontPic')? <img src={getPic(selected, 'vehicleInfo.vehicleFrontPic', 'vehicleInfo.frontPic', 'vehicleFront', 'vehicleFrontPic', 'frontPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
+                  <div><small style={{color:'white'}}>Vehicle Back</small><br/>{getPic(selected, 'vehicleInfo.vehicleBackPic', 'vehicleInfo.backPic', 'vehicleBack', 'vehicleBackPic', 'backPic')? <img src={getPic(selected, 'vehicleInfo.vehicleBackPic', 'vehicleInfo.backPic', 'vehicleBack', 'vehicleBackPic', 'backPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
+                  <div><small style={{color:'white'}}>Selfie</small><br/>{getPic(selected, 'selfie', 'selfieWithLicence')? <img src={getPic(selected, 'selfie', 'selfieWithLicence')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
                 </div>
               </div>
             </div>

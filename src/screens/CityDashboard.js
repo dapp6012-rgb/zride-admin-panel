@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, MiniMap, ScreenFrame, SectionCard, StatCard, Badge } from '../components/ControlRoom';
 import { API_URL } from '../lib/api';
+import { exportToExcel } from '../utils/exportExcel';
 
 export default function CityDashboard({ notify }) {
   const [stats, setStats] = useState(null);
@@ -65,6 +66,24 @@ export default function CityDashboard({ notify }) {
   const pickupTime = stats?.medianPickupTime?? 0;
   const rating = stats?.avgRating?? 0;
 
+  const handleExportExcel = () => {
+    if (!stats) return;
+    const formatted = [{
+      City: selectedCity,
+      RidesToday: ridesToday,
+      OnlineDrivers: onlineDrivers,
+      CityEarnings_Total: cityEarnings,
+      CityEarnings_Millions: (cityEarnings / 1000000).toFixed(2),
+      OpenIncidents: openIncidents,
+      DispatchSuccessPercent: dispatchSuccess,
+      MedianPickupMinutes: pickupTime,
+      AvgRating: rating,
+      Mode: stats.mode || '-',
+      LastUpdated: new Date().toLocaleString()
+    }];
+    exportToExcel(formatted, `ZRide_City_${selectedCity}_${new Date().toISOString().slice(0,10)}`);
+  };
+
   if (!loading && cities.length === 0) {
     return (
       <div className="text-white min-h-screen bg-black p-8" style={{ color: '#fff' }}>
@@ -82,7 +101,7 @@ export default function CityDashboard({ notify }) {
         title={selectedCity? `${selectedCity}, on the move.` : 'Select a city'}
         description={`Your city pulse since midnight. Last updated: ${new Date().toLocaleTimeString()}${stats?.mode!== 'mongodb'? ' • ' + (stats?.mode || 'loading') : ''}`}
         actions={
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <select
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
@@ -94,6 +113,7 @@ export default function CityDashboard({ notify }) {
                 return <option key={idx} value={cityName} style={{ background: '#000' }}>{cityName}</option>;
               })}
             </select>
+            <button onClick={handleExportExcel} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontWeight: 700, cursor: 'pointer' }}>📥 Export Excel</button>
           </div>
         }
       >

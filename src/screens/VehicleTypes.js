@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { exportToExcel } from '../utils/exportExcel';
 const API_URL = 'http://localhost:3000';
 
 export default function VehicleTypes() {
@@ -83,9 +84,31 @@ export default function VehicleTypes() {
     } 
   };
 
+  const handleExportExcel = () => {
+    const formatted = types.map(t => ({
+      ID: t._id,
+      DisplayName: t.displayName,
+      SystemName: t.name,
+      Icon: t.icon,
+      Capacity: t.capacity,
+      City: t.city,
+      BaseFare: t.baseFare,
+      PerKM: t.perKm,
+      PerMinute: t.perMinute,
+      CommissionPercent: t.commission
+    }));
+    exportToExcel(formatted, `ZRide_VehicleTypes_${types.length}`);
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto text-white">
-      <h1 className="text-2xl font-black mb-6 text-white">Vehicle Types Manager</h1>
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
+        <h1 className="text-2xl font-black text-white">Vehicle Types Manager ({types.length})</h1>
+        <div className="flex gap-2">
+          <button onClick={handleExportExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-bold">📥 Export Excel</button>
+          <button onClick={fetchTypes} className="bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-bold">🔄 Refresh</button>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="bg-[#1a1a1a] border border-white/10 p-6 rounded-2xl shadow mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
         <input className="p-3 border border-white/10 rounded-xl bg-black text-white placeholder:text-white/40 outline-none focus:ring-2 focus:ring-[#A7E92F]" placeholder="Display Name" value={form.displayName} onChange={e=>setForm({...form, displayName:e.target.value, name:e.target.value.toLowerCase().replace(/\s+/g,'-')})} required />

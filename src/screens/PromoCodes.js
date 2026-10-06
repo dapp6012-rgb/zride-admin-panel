@@ -38,8 +38,14 @@ export default function PromoCodes() {
   };
 
   const handleCreate = async () => {
-    if (!form.code ||!form.expiryDate) return alert('Code and Expiry (MM DD YYYY) required');
-    const res = await fetch(`${API_URL}/promo/create`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    if (!form.code.trim() || !form.expiryDate) return alert('Code and Expiry (MM DD YYYY) required');
+    const payload = {
+      ...form,
+      code: form.code.trim().toUpperCase(),
+      expiryDate: `${form.expiryDate}T23:59:59.999Z`,
+      isActive: true,
+    };
+    const res = await fetch(`${API_URL}/promo/create`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const data = await res.json();
     if (data.success) {
       alert('Promo Created');

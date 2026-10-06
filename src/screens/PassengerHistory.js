@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-
 import { API_BASE_URL as API_URL } from '../lib/api';
+import { exportToExcel } from '../utils/exportExcel';
 
 export default function PassengerHistory() {
   const [riders, setRiders] = useState([]);
@@ -46,10 +46,23 @@ export default function PassengerHistory() {
     );
   });
 
+  const handleExportExcel = () => {
+    const formatted = filteredRiders.map(rider => ({
+      RiderID: rider.riderId || rider.phone || '-',
+      Name: rider.name || 'Rider',
+      Phone: rider.phone || 'Phone unavailable',
+      TotalRides: rider.totalRides || 0,
+      TotalSpent: rider.totalSpent || (rider.rides || []).reduce((sum, r) => sum + (Number(r.finalFare || r.fare) || 0), 0),
+      LastRide_Pickup: rider.rides?.[0]?.pickup || '-',
+      LastRide_Destination: rider.rides?.[0]?.destination || rider.rides?.[0]?.drop || '-',
+      LastRide_Fare: rider.rides?.[0]?.finalFare || rider.rides?.[0]?.fare || '-'
+    }));
+    exportToExcel(formatted, `ZRide_Riders_${search || 'All'}`);
+  };
+
   return (
     <div className="p-4 bg-black min-h-screen">
-      {/* Search Input */}
-      <div className="mb-4">
+      <div className="mb-4 flex gap-2">
         <input
           type="text"
           placeholder="Search by name, phone, pickup, destination..."
@@ -57,6 +70,9 @@ export default function PassengerHistory() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full p-3 border border-white/10 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#A7E92F] text-white placeholder:text-white/50 bg-[#1a1a1a]"
         />
+        <button onClick={handleExportExcel} className="shrink-0 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-xl text-sm font-bold">
+          📥 Export
+        </button>
       </div>
 
       {loading && <p className="text-center text-white">Loading riders...</p>}

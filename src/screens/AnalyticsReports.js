@@ -15,23 +15,46 @@ import {
   YAxis,
 } from 'recharts';
 import { API_URL } from '../lib/api';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 const CHART_COLORS = ['#A7E92F', '#2878B5', '#D99424', '#C74D4D', '#7665A8'];
 const money = value => `Rs. ${Number(value || 0).toLocaleString()}`;
 
 export default function AnalyticsReport() {
   const [stats, setStats] = useState(null);
+  const [cities, setCities] = useState([]);
+  const [selectedCity, setSelectedCity] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let active = true;
-    fetch(`${API_URL}/analytics`)
+    fetch(`${API_URL}/analytics/cities`)
+    .then(response => {
+        if (!response.ok) throw new Error(`City list request failed (${response.status})`);
+        return response.json();
+      })
+  .then(data => {
+        if (active && data.success) setCities(Array.isArray(data.cities)? data.cities : []);
+      })
+    .catch(() => {
+        if (active) setCities([]);
+      });
+    return () => { active = false; };
+  }, [selectedCity]);
+
+  useEffect(() => {
+    let active = true;
+    const cityQuery = selectedCity? `?city=${encodeURIComponent(selectedCity)}` : '';
+    setLoading(true);
+    fetch(`${API_URL}/analytics${cityQuery}`)
     .then(response => {
         if (!response.ok) throw new Error(`Analytics request failed (${response.status})`);
         return response.json();
       })
     .then(data => {
+        if (!data.success) throw new Error(data.message || 'Could not load analytics data');
         if (active) {
           setStats(data);
           setError('');
@@ -44,7 +67,62 @@ export default function AnalyticsReport() {
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, []);
+  }, [selectedCity]);
+
+  const handleExportExcel = () => {
+    if(!stats) return alert("No data to export");
+    const wb = XLSX.utils.book_new();
+
+    const summaryData = [
+      { Metric: 'Total Trips', Value: stats.totalTrips },
+      { Metric: 'Total Revenue', Value: stats.totalRevenue },
+      { Metric: 'Total Commission', Value: stats.totalCommission },
+      { Metric: 'Active Drivers', Value: stats.activeDrivers },
+      { Metric: 'City', Value: selectedCity || 'All Cities' },
+    ];
+    const ws1 = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, ws1, "Summary");
+
+    if(stats.revenue7Days?.length){
+      const ws2 = XLSX.utils.json_to_sheet(stats.revenue7Days.map(r => ({
+        Day: r.day,
+        Revenue: r.revenue
+      })));
+      XLSX.utils.book_append_sheet(wb, ws2, "Revenue 7 Days");
+    }
+
+    if(stats.tripsByZone?.length){
+      const ws3 = XLSX.utils.json_to_sheet(stats.tripsByZone.map(z => ({
+        Zone: z.zone,
+        Trips: z.trips
+      })));
+      XLSX.utils.book_append_sheet(wb, ws3, "Trips by Zone");
+    }
+
+    if(stats.paymentSplit?.length){
+      const ws4 = XLSX.utils.json_to_sheet(stats.paymentSplit.map(p => ({
+        PaymentMethod: p.name,
+        Count: p.value
+      })));
+      XLSX.utils.book_append_sheet(wb, ws4, "Payment Split");
+    }
+
+    if(stats.commissionByVehicleType?.length){
+      const ws5 = XLSX.utils.json_to_sheet(stats.commissionByVehicleType.map(t => ({
+        VehicleType: t.vehicleType,
+        RatePercent: t.commissionPercent,
+        Trips: t.trips,
+        TotalRevenue: t.totalRevenue,
+        TotalCommission: t.totalCommission
+      })));
+      XLSX.utils.book_append_sheet(wb, ws5, "Commission by Vehicle");
+    }
+
+    const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([buffer], { type: 'application/octet-stream' });
+    const cityName = selectedCity || 'AllCities';
+    saveAs(blob, `ZRide_Analytics_${cityName}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
 
   if (loading) return <p className="p-6 text-white bg-black min-h-screen">Loading analytics...</p>;
   if (error) return <p className="p-6 text-white bg-black min-h-screen">{error}</p>;
@@ -60,12 +138,33 @@ export default function AnalyticsReport() {
   const tripsByZone = Array.isArray(stats.tripsByZone)? stats.tripsByZone : [];
   const paymentSplit = Array.isArray(stats.paymentSplit)? stats.paymentSplit : [];
   const commissionByVehicleType = Array.isArray(stats.commissionByVehicleType)
-  ? stats.commissionByVehicleType
+? stats.commissionByVehicleType
     : [];
 
   return (
     <main className="min-h-full space-y-5 bg-black p-5 text-white">
-      <h1 className="text-xl font-bold text-white">Analytics Report</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold text-white">Analytics Report</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="analytics-city" className="text-sm text-white/70">City</label>
+          <select
+            id="analytics-city"
+            value={selectedCity}
+            onChange={event => setSelectedCity(event.target.value)}
+            className="min-w-44 rounded-md border border-white/20 bg-[#1a1a1a] px-3 py-2 text-white"
+          >
+            <option value="">All cities</option>
+            {cities.map(city => <option key={city} value={city}>{city}</option>)}
+          </select>
+          <button
+            type="button"
+            onClick={handleExportExcel}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium"
+          >
+            📥 Export Excel
+          </button>
+        </div>
+      </div>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map(card => (

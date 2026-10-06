@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { API_BASE_URL as API_URL } from '../lib/api';
+import { exportToExcel } from '../utils/exportExcel';
 
 export default function ComplaintsSupportRider({ setScreen, notify }) {
   const [complaints, setComplaints] = useState([]);
@@ -44,18 +45,21 @@ export default function ComplaintsSupportRider({ setScreen, notify }) {
     }
   };
 
-  const handleViewChat = (complaint) => {
-    // 1. ID save karo taake TicketDetailChat ko pata chale kaunsi chat kholni hai
-    localStorage.setItem('ZRide_active_ticket', complaint._id);
-    localStorage.setItem('ZRide_active_ticket_data', JSON.stringify(complaint));
-    // 2. Screen change karo
-    if (setScreen) {
-      setScreen('ticket-detail');
-    } else {
-      // Fallback agar setScreen prop na mile
-      localStorage.setItem('ZRide_screen', 'ticket-detail');
-      window.location.reload();
-    }
+  const handleExportExcel = () => {
+    const formatted = filteredList.map(c => ({
+      TicketID: c.ticketId,
+      Role: c.role,
+      Type: c.type,
+      RiderName: c.passengerName || 'Rider',
+      RiderID: c.passengerId,
+      DriverName: c.driverName || '-',
+      RideID: c.rideId || 'General',
+      Description: c.description,
+      Status: c.status,
+      ContactPreference: c.contactPreference,
+      CreatedAt: c.createdAt ? new Date(c.createdAt).toLocaleString() : c.timestamp ? new Date(c.timestamp).toLocaleString() : '-'
+    }));
+    exportToExcel(formatted, `ZRide_RiderComplaints_${filter}`);
   };
 
   const filteredList = complaints.filter(c => {
@@ -67,9 +71,12 @@ export default function ComplaintsSupportRider({ setScreen, notify }) {
 
   return (
     <div style={{ padding: 24, background: '#f5f5f5', minHeight: '100vh' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         <h2 style={{ fontWeight: 900 }}>Rider Complaints 🛵 ({filteredList.length})</h2>
-        <button onClick={fetchComplaints} style={{ padding: '8px 16px', borderRadius: 8, background: '#000', color: '#fff', fontWeight: 700 }}>Refresh</button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={handleExportExcel} style={{ padding: '8px 16px', borderRadius: 8, background: '#16a34a', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer' }}>📥 Export Excel</button>
+          <button onClick={fetchComplaints} style={{ padding: '8px 16px', borderRadius: 8, background: '#000', color: '#fff', fontWeight: 700 }}>Refresh</button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
@@ -108,14 +115,8 @@ export default function ComplaintsSupportRider({ setScreen, notify }) {
               </div>
 
               <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-                <button 
-                  onClick={() => handleViewChat(c)} 
-                  style={{ flex: 1, padding: 10, borderRadius: 8, background: '#000', color: '#A7E92F', border: 'none', fontWeight: 900, cursor: 'pointer' }}
-                >
-                  View Chat 💬
-                </button>
                 {c.status !== 'resolved' && <button onClick={() => handleResolve(c._id)} style={{ flex: 1, padding: 10, borderRadius: 8, background: '#00FF7F', border: 'none', fontWeight: 900, cursor: 'pointer' }}>Resolved</button>}
-                <button onClick={() => handleDelete(c._id)} style={{ padding: '10px 16px', borderRadius: 8, background: '#fff', border: '1px solid #FF4444', color: '#FF4444', fontWeight: 800, cursor: 'pointer' }}>Delete</button>
+                <button onClick={() => handleDelete(c._id)} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, background: '#fff', border: '1px solid #FF4444', color: '#FF4444', fontWeight: 800, cursor: 'pointer' }}>Delete</button>
               </div>
             </div>
           ))}
