@@ -6,7 +6,7 @@ import NoInternetBanner from './components/NoInternetBanner';
 
 const SECURE_ADMIN = {
   email: "dapp6012@gmail.com",
-  pass: "hammad55443321"
+  pass: "hammad321"
 };
 
 class ErrorBoundary extends React.Component {
@@ -19,7 +19,7 @@ class ErrorBoundary extends React.Component {
         <div style={{ padding: 40, background: '#fff', color: '#000', borderRadius: 12, margin: 20 }}>
           <h2 style={{color: 'red'}}>Screen Crash: {this.props.screenName}</h2>
           <pre style={{ background: '#f1f5f9', padding: 12, overflow: 'auto', fontSize: 12 }}>{this.state.error?.message}</pre>
-          <button onClick={() => { localStorage.clear(); window.location.reload(); }} style={{ marginTop: 12, padding: '8px 16px', background: '#000', color: '#fff', borderRadius: 8 }}>Go to Login</button>
+          <button onClick={() => { localStorage.clear(); sessionStorage.clear(); window.location.reload(); }} style={{ marginTop: 12, padding: '8px 16px', background: '#000', color: '#fff', borderRadius: 8 }}>Go to Login</button>
         </div>
       );
     }
@@ -83,14 +83,14 @@ const LoadingFallback = memo(() => (
 LoadingFallback.displayName = 'LoadingFallback';
 
 export default function App() {
-  const [stage, setStage] = useState(() => localStorage.getItem('ZRide_stage') || 'splash');
-  const [role, setRole] = useState(() => localStorage.getItem('ZRide_role') || '');
+  const [stage, setStage] = useState(() => sessionStorage.getItem('ZRide_stage') || 'splash');
+  const [role, setRole] = useState(() => sessionStorage.getItem('ZRide_role') || 'Super Admin');
   const [screen, setScreen] = useState(() => {
-    const saved = localStorage.getItem('ZRide_screen') || 'dashboard';
+    const saved = sessionStorage.getItem('ZRide_screen') || 'dashboard';
     return SCREENS_MAP[saved]? saved : 'dashboard';
   });
   const [toast, setToast] = useState('');
-  const [isAuth, setIsAuth] = useState(() => localStorage.getItem('ZRide_auth') === 'true');
+  const [isAuth, setIsAuth] = useState(() => sessionStorage.getItem('ZRide_auth') === 'true');
 
   useEffect(() => {
     document.title = "ZRide Admin";
@@ -101,15 +101,16 @@ export default function App() {
       document.head.appendChild(meta);
     }
     meta.content = "noindex, nofollow";
-    if (!isAuth && stage === 'app') {
-      setStage('login');
-    }
-  }, [isAuth, stage]);
+    localStorage.removeItem('ZRide_auth');
+    localStorage.removeItem('ZRide_stage');
+    localStorage.removeItem('ZRide_role');
+    localStorage.removeItem('ZRide_screen');
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem('ZRide_stage', stage);
-    localStorage.setItem('ZRide_role', role);
-    localStorage.setItem('ZRide_screen', screen);
+    sessionStorage.setItem('ZRide_stage', stage);
+    sessionStorage.setItem('ZRide_role', role);
+    sessionStorage.setItem('ZRide_screen', screen);
   }, [stage, role, screen]);
 
   const notify = useCallback((message) => {
@@ -118,7 +119,7 @@ export default function App() {
   }, []);
 
   const handleLogin = useCallback(() => {
-    localStorage.setItem('ZRide_auth', 'true');
+    sessionStorage.setItem('ZRide_auth', 'true');
     setIsAuth(true);
     setRole('Super Admin');
     setScreen('dashboard');
@@ -126,16 +127,11 @@ export default function App() {
     notify('Super Admin login success');
   }, [notify]);
 
-  const handleChooseRole = useCallback((selected) => {
-    setRole(selected);
-    setStage('login');
-    notify(`${selected} login required`);
-  }, [notify]);
-
   const handleLogout = useCallback(() => {
+    sessionStorage.clear();
     localStorage.clear();
     setIsAuth(false);
-    setRole('');
+    setRole('Super Admin');
     setScreen('dashboard');
     setStage('splash');
   }, []);
@@ -144,12 +140,16 @@ export default function App() {
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      {/* 2. BANNER YAHAN ADD KIYA - HAR SCREEN PE DIKHEGA */}
       <NoInternetBanner />
 
-      {stage === 'splash' && <SplashFrontScreen onContinue={() => setStage('role')} />}
-      {stage === 'role' && <RoleSelectScreen selected={role} onSelect={handleChooseRole} />}
+      {/* SPLASH KE BAAD SEEDHA LOGIN */}
+      {stage === 'splash' && <SplashFrontScreen onContinue={() => {
+        setRole('Super Admin');
+        setStage('login');
+      }} />}
+
       {stage === 'login' && <AdminLoginScreen role={role} onLogin={handleLogin} secureConfig={SECURE_ADMIN} />}
+
       {stage === 'app' && isAuth && (
         <div className="app min-h-screen bg-[#F8FAFC] text-black">
           <Shell role={role} screen={screen} setScreen={setScreen} onLogout={handleLogout}>
