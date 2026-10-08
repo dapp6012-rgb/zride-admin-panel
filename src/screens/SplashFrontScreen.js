@@ -1,88 +1,27 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
 
-function SplashFrontScreen() {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-
+export default function SplashFrontScreen({ onContinue }) {
   useEffect(() => {
     const timer = setTimeout(() => {
-      const token = sessionStorage.getItem('adminToken');
-      if (token) {
-        navigate('SuperAdminDashboard');
-      } else {
-        navigate('AdminLoginScreen');
-      }
-    }, 2500);
-
+      if (onContinue) onContinue();
+    }, 2500); // 2.5 sec baad auto login pe jayega
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [onContinue]);
 
   return (
-    <div style={{
-      height: '100vh',
-      width: '100vw',
-      backgroundColor: '#FFD700', // Yellow Background
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      fontFamily: 'Poppins, sans-serif'
-    }}>
-      {/* Logo Circle */}
-      <div style={{
-        width: '120px',
-        height: '120px',
-        backgroundColor: '#000',
-        borderRadius: '30px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-      }}>
-        <span style={{ color: '#FFD700', fontSize: '48px', fontWeight: '900' }}>Z</span>
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
+      <div className="w-20 h-20 bg-[#A7E92F] rounded-full animate-pulse mb-6 flex items-center justify-center">
+        <span className="text-black font-bold text-3xl">Z</span>
       </div>
+      <h1 className="text-3xl font-bold tracking-widest">ZRide</h1>
+      <p className="text-white/60 text-sm mt-2 tracking-widest">ADMIN PANEL</p>
 
-      {/* Name */}
-      <h1 style={{
-        marginTop: '20px',
-        fontSize: '42px',
-        fontWeight: '900',
-        letterSpacing: '2px',
-        color: '#000'
-      }}>
-        ZRide
-      </h1>
-      <p style={{
-        marginTop: '-10px',
-        fontSize: '14px',
-        fontWeight: '600',
-        letterSpacing: '6px',
-        color: '#000',
-        opacity: 0.7
-      }}>
-        ADMIN PANEL
-      </p>
-
-      {/* Loader */}
-      <div style={{
-        marginTop: '60px',
-        width: '40px',
-        height: '40px',
-        border: '4px solid rgba(0,0,0,0.1)',
-        borderTop: '4px solid #000',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }}></div>
-
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+      <button
+        onClick={onContinue}
+        className="mt-10 px-8 py-3 bg-white text-black rounded-full font-semibold"
+      >
+        Continue
+      </button>
     </div>
   );
 }
-
-export default SplashFrontScreen;
