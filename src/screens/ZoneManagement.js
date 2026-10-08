@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL as API_URL } from "../lib/api";
-import { exportToExcel } from "../utils/exportExcel";
+import { exportExcel } from "../utils/exportExcel";
+import ExcelExportButton from '../components/ExcelExportButton';
 
 export default function ZoneManagement({ notify }) {
   const [zones, setZones] = useState([]);
@@ -104,9 +105,10 @@ export default function ZoneManagement({ notify }) {
       IsActive: z.isActive !== false ? 'Active' : 'Disabled',
       Lat: z.lat,
       Lng: z.lng,
-      RadiusMeters: z.radius
+      RadiusMeters: z.radius,
+      Actions: 'Edit / Delete',
     }));
-    exportToExcel(formatted, `ZRide_Zones_${zones.length}`);
+    exportExcel(formatted, 'ZoneManagement');
   };
 
   return (
@@ -136,7 +138,7 @@ export default function ZoneManagement({ notify }) {
         <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
           <h2 className="text-white font-bold">All Zones ({zones.length})</h2>
           <div className="flex gap-2">
-            <button onClick={handleExportExcel} className="text-sm bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg text-white font-bold">📥 Export Excel</button>
+            <ExcelExportButton onClick={handleExportExcel} />
             <button onClick={fetchZones} className="text-sm bg-white/10 px-3 py-1.5 rounded-lg text-white">Refresh</button>
           </div>
         </div>

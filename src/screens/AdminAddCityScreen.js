@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '../lib/api';
-import { exportToExcel } from '../utils/exportExcel';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 
 export default function AdminAddCityScreen({ notify }) {
   const [tab, setTab] = useState('city');
@@ -95,7 +96,7 @@ export default function AdminAddCityScreen({ notify }) {
       PhoneLength: c.length,
       CreatedAt: new Date(c.createdAt || Date.now()).toLocaleDateString()
     }));
-    exportToExcel(formatted, "ZRide_Countries");
+    exportExcel(formatted, 'AdminAddCityScreen_Countries');
   };
 
   const handleExportCities = () => {
@@ -110,7 +111,7 @@ export default function AdminAddCityScreen({ notify }) {
       PerKm: z.perKm,
       IsActive: z.isActive ? "Active" : "Inactive"
     }));
-    exportToExcel(formatted, "ZRide_Cities");
+    exportExcel(formatted, 'AdminAddCityScreen_Cities');
   };
 
   return (
@@ -118,13 +119,9 @@ export default function AdminAddCityScreen({ notify }) {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-white">Admin Location Manager</h1>
         {tab === 'country' ? (
-          <button onClick={handleExportCountries} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">
-            📥 Export Excel
-          </button>
+          <ExcelExportButton onClick={handleExportCountries} />
         ) : (
-          <button onClick={handleExportCities} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">
-            📥 Export Excel
-          </button>
+          <ExcelExportButton onClick={handleExportCities} />
         )}
       </div>
       

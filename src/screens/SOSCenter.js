@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 import { API_URL, SOCKET_URL } from '../lib/api';
 
 export default function SOSCenter({ notify }) {
@@ -95,6 +96,15 @@ export default function SOSCenter({ notify }) {
     if (phone) window.open(`tel:${phone}`, '_self');
   };
 
+  const handleExportExcel = () => exportExcel(sosList.map(sos => ({
+    UserID: sos.driverId || sos.riderId || sos.userId || 'Unknown',
+    Phone: sos.phone || 'Not provided',
+    Status: sos.status || '',
+    CreatedAt: sos.createdAt ? new Date(sos.createdAt).toLocaleString() : '',
+    Latitude: sos.lat ?? '',
+    Longitude: sos.lng ?? '',
+  })), 'SOSCenter');
+
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#FFFFFF', fontFamily: 'Inter, sans-serif' }}>
       {incomingAlert && (
@@ -119,11 +129,14 @@ export default function SOSCenter({ notify }) {
             <span style={{ width: 10, height: 10, background: '#FF3B30', borderRadius: '50%', display: 'inline-block' }}></span>
             SOS Center
           </h2>
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #000000', color: '#000000', background: '#FFFFFF', fontWeight: 600 }}>
-            <option value="active">Active</option>
-            <option value="resolved">Resolved</option>
-            <option value="all">All</option>
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #000000', color: '#000000', background: '#FFFFFF', fontWeight: 600 }}>
+              <option value="active">Active</option>
+              <option value="resolved">Resolved</option>
+              <option value="all">All</option>
+            </select>
+            <ExcelExportButton onClick={handleExportExcel} />
+          </div>
         </div>
 
         {sosList.length === 0 && <p style={{ textAlign: 'center', marginTop: 40, color: '#000000', fontWeight: 600 }}>No {filter} SOS alerts</p>}

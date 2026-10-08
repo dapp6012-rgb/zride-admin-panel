@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, MiniMap, ScreenFrame, SectionCard, StatCard, Badge } from '../components/ControlRoom';
 import { API_URL } from '../lib/api';
-import { exportToExcel } from '../utils/exportExcel';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 
 export default function CityDashboard({ notify }) {
   const [stats, setStats] = useState(null);
@@ -81,7 +82,7 @@ export default function CityDashboard({ notify }) {
       Mode: stats.mode || '-',
       LastUpdated: new Date().toLocaleString()
     }];
-    exportToExcel(formatted, `ZRide_City_${selectedCity}_${new Date().toISOString().slice(0,10)}`);
+    exportExcel(formatted, 'CityDashboard');
   };
 
   if (!loading && cities.length === 0) {
@@ -113,7 +114,7 @@ export default function CityDashboard({ notify }) {
                 return <option key={idx} value={cityName} style={{ background: '#000' }}>{cityName}</option>;
               })}
             </select>
-            <button onClick={handleExportExcel} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontWeight: 700, cursor: 'pointer' }}>📥 Export Excel</button>
+            <ExcelExportButton onClick={handleExportExcel} disabled={!stats} />
           </div>
         }
       >

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { exportToExcel } from '../utils/exportExcel';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 
 export default function Commission() {
   const [selectedMonth, setSelectedMonth] = useState("September 2026");
@@ -87,18 +88,13 @@ export default function Commission() {
 
   const handleExportExcel = () => {
     const formatted = filteredDrivers.map(d => ({
-      DriverID: d.id,
-      Name: d.name,
-      Phone: d.phone,
-      VehicleNumber: d.vehicleNumber,
-      Month: selectedMonth,
-      Amount: d.amount || charge,
+      Driver: `${d.name} (${d.vehicleNumber} | ${d.phone})`,
+      Amount: `Rs ${d.amount || charge}`,
       Status: d.status,
-      PaidDate: d.date,
-      TransactionID: d.transactionId,
-      HasProof: d.proof? 'Yes' : 'No'
+      Proof: d.proof || 'No Proof',
+      Action: d.status === 'Proof Sent' ? 'View / Verify' : d.status === 'Pending' ? 'Mark Paid' : d.date,
     }));
-    exportToExcel(formatted, `ZRide_Commission_${selectedMonth}_${filter}`);
+    exportExcel(formatted, 'Commission');
   };
 
   const filteredDrivers = drivers.filter(d => {
@@ -122,9 +118,7 @@ export default function Commission() {
             style={{ background: 'hsl(222 28% 13%)', border: '1px solid hsl(220 20% 23%)', color: '#fff', padding: '10px 14px', borderRadius: '10px' }}>
             {months.map(m => <option key={m}>{m}</option>)}
           </select>
-          <button onClick={handleExportExcel} style={{ background: '#16a34a', border: 0, color: '#fff', padding: '10px 16px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>
-            📥 Export Excel
-          </button>
+          <ExcelExportButton onClick={handleExportExcel} />
         </div>
       </div>
 

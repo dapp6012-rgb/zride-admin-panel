@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 
 const API_URL = 'http://localhost:3000';
 const LINKS = [
@@ -183,6 +185,12 @@ export default function AdminAddBanner() {
 
   // FILTER: Jo city select karo sirf usi ke banners show honge
   const filteredBanners = filterCity === 'All'? banners : banners.filter(b => b.city === filterCity);
+  const handleExportExcel = () => exportExcel(filteredBanners.map(b => ({
+    Title: b.title || '',
+    City: b.city || '',
+    DisplayedOn: LINKS.find(link => link.value === b.link)?.label || b.link || '',
+    ImageURL: b.image || '',
+  })), 'AdminAddBanner');
 
   return (
     <div className="p-6 max-w-5xl mx-auto text-white">
@@ -275,12 +283,15 @@ export default function AdminAddBanner() {
       </div>
 
       <div className="bg-[#1a1a1a] rounded-2xl shadow p-6 border border-white/10">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
           <h2 className="font-bold text-lg text-white">Banners - {filterCity} ({filteredBanners.length})</h2>
-          <select value={filterCity} onChange={e => setFilterCity(e.target.value)} className="p-2 rounded-lg border border-white/10 bg-black text-white text-sm">
-            <option value="All" className="bg-black text-white">All Cities</option>
-            {cities.map(c => <option key={c} value={c} className="bg-black text-white">{c}</option>)}
-          </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <select value={filterCity} onChange={e => setFilterCity(e.target.value)} className="p-2 rounded-lg border border-white/10 bg-black text-white text-sm">
+              <option value="All" className="bg-black text-white">All Cities</option>
+              {cities.map(c => <option key={c} value={c} className="bg-black text-white">{c}</option>)}
+            </select>
+            <ExcelExportButton onClick={handleExportExcel} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

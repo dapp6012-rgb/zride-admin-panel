@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Badge, Button, DataScreen, SectionCard, ScreenFrame } from '../components/ControlRoom';
+import { Badge, DataScreen, SectionCard, ScreenFrame } from '../components/ControlRoom';
 import { API_BASE_URL as API_URL } from '../lib/api';
-import { exportToExcel } from '../utils/exportExcel';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
+import { Button } from '../components/ControlRoom';
 
 export default function DriverOnboarding({ notify }) {
   const [applicants, setApplicants] = useState([]);
@@ -65,21 +67,14 @@ export default function DriverOnboarding({ notify }) {
 
   const handleExportExcel = () => {
     const formatted = applicants.map(a => ({
-      DriverID: a.driverId || a.id || a._id,
-      Name: a.basicInfo?.name || a.name || 'Unknown',
-      Phone: a.basicInfo?.phone || a.phone || '-',
-      CNIC: a.basicInfo?.cnic || a.cnic || '-',
+      Driver: `${a.basicInfo?.name || a.name || 'Unknown'} (${a.driverId || '-'})`,
+      CNICPhone: `${a.basicInfo?.cnic || a.cnic || 'No CNIC'} / ${a.basicInfo?.phone || a.phone || '-'}`,
       Email: a.basicInfo?.email || a.email || '-',
-      City: a.basicInfo?.city || a.city || '-',
-      VehicleType: a.vehicleInfo?.type || a.vehicleType || '-',
-      VehicleCompany: a.vehicleInfo?.company || a.make || '-',
-      VehicleModel: a.vehicleInfo?.model || a.vehicleModel || '-',
-      NumberPlate: a.vehicleInfo?.numberPlate || a.carNumber || '-',
-      LicenceNumber: a.licenceInfo?.licenceNumber || a.licenceNumber || '-',
-      Status: a.status,
-      CreatedAt: a.createdAt? new Date(a.createdAt).toLocaleString() : '-'
+      Vehicle: `${a.vehicleInfo?.model || a.vehicleModel || '-'} ${a.vehicleInfo?.numberPlate || a.carNumber || ''}`.trim(),
+      Status: a.status || '',
+      Action: a.status === 'rejected' ? 'View All Info / Delete' : 'View All Info',
     }));
-    exportToExcel(formatted, `ZRide_Drivers_${applicants.length}`);
+    exportExcel(formatted, 'DriverOnboarding');
   };
 
   const getPic = (obj,...keys) => {
@@ -94,7 +89,7 @@ export default function DriverOnboarding({ notify }) {
 
   return (
     <div className="text-white">
-    <ScreenFrame title="Driver Verification Center" description="Real InDrive style verification - All driver docs." actions={<div style={{display:'flex', gap:8}}><Button variant="ghost" onClick={handleExportExcel} style={{background:'#16a34a', color:'white'}}>📥 Export Excel</Button><Button variant="primary" onClick={fetchDrivers}>🔄 Refresh</Button></div>}>
+    <ScreenFrame title="Driver Verification Center" description="Real InDrive style verification - All driver docs." actions={<div style={{display:'flex', gap:8}}><ExcelExportButton onClick={handleExportExcel} /></div>}>
 
       <div className="grid two-col">
         <SectionCard title="Queue Status" meta="LIVE">

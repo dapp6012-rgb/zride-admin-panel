@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
-import { exportToExcel } from '../utils/exportExcel';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 
 export default function CallLogs(){
   const [logs,setLogs]=useState([]);
@@ -33,18 +34,13 @@ export default function CallLogs(){
 
   const handleExportExcel = () => {
     const formatted = logs.map(l => ({
-      LogID: l._id || l.id,
       TripID: l.tripId,
-      CallerRole: l.callerRole,
-      CallerID: l.callerId || 'N/A',
-      ReceiverName: l.receiverName || 'N/A',
-      ReceiverID: l.receiverId || 'N/A',
-      PhoneNumber: l.number || '-',
-      ClickedAt_Date: l.clickedAt ? new Date(l.clickedAt).toLocaleDateString() : '-',
-      ClickedAt_Time: l.clickedAt ? new Date(l.clickedAt).toLocaleTimeString() : '-',
-      FullTime: l.clickedAt ? new Date(l.clickedAt).toLocaleString() : '-'
+      Caller: `${l.callerRole || ''}${l.callerId ? ` (${l.callerId})` : ''}`,
+      Receiver: l.receiverName || l.receiverId || '-',
+      Phone: l.number || '-',
+      Time: l.clickedAt ? new Date(l.clickedAt).toLocaleString() : '-',
     }));
-    exportToExcel(formatted, `ZRide_CallLogs_${search || 'All'}`);
+    exportExcel(formatted, 'CallLogs');
   };
 
   if(loading) return <div className="min-h-screen bg-black text-white p-4">Loading...</div>
@@ -58,12 +54,7 @@ export default function CallLogs(){
           onChange={e=>setSearch(e.target.value)}
           className="bg-black text-white border border-white placeholder:text-white/60 p-2 w-full max-w-sm rounded"
         />
-        <button
-          onClick={handleExportExcel}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium"
-        >
-          📥 Export Excel
-        </button>
+        <ExcelExportButton onClick={handleExportExcel} />
       </div>
 
       {error ? <div role="alert" className="text-white mt-4">{error}</div> : !logs.length ? <div className="text-white mt-4">No Call Logs Found</div> : (

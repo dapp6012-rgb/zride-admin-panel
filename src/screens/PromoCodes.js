@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 import { API_URL } from '../lib/api';
 
 export default function PromoCodes() {
@@ -62,6 +63,15 @@ export default function PromoCodes() {
     fetchPromos();
   };
 
+  const handleExportExcel = () => exportExcel(promos.map(p => ({
+    Code: p.code,
+    Status: p.isActive ? 'Active' : 'Inactive',
+    Discount: `${p.discountValue}${p.discountType === 'percentage' ? '%' : ' PKR'} off`,
+    Used: p.usedCount || 0,
+    MaxUses: p.maxUses,
+    Expiry: p.expiryDate ? new Date(p.expiryDate).toLocaleDateString() : '',
+  })), 'PromoCodes');
+
   return (
     <div style={{ padding: 24, background: '#000000', minHeight: '100vh' }}>
       <h2 style={{ color: '#FFFFFF', fontWeight: 900 }}>Promo Code Management</h2>
@@ -103,7 +113,10 @@ export default function PromoCodes() {
 
       {/* LIST */}
       <div style={{ marginTop: 30 }}>
-        <h3 style={{ color: '#FFFFFF' }}>All Promo Codes ({promos.length})</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <h3 style={{ color: '#FFFFFF' }}>All Promo Codes ({promos.length})</h3>
+          <ExcelExportButton onClick={handleExportExcel} />
+        </div>
         {promos.map(p => (
           <div key={p._id} style={{ border: '1px solid rgba(255,255,255,0.1)', padding: 14, borderRadius: 10, marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1a1a1a' }}>
             <div>

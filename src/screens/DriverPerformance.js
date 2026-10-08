@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ban, Check, Search, Star, Wallet, X } from 'lucide-react';
 import { API_BASE_URL as API_URL } from '../lib/api';
-import { exportToExcel } from '../utils/exportExcel';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 
 const numberValue = value => Number(value) || 0;
 const performanceScore = driver =>
@@ -140,7 +141,7 @@ export default function DriverPerformance() {
       Earnings: driver.earnings,
       PerformanceScore: performanceScore(driver).toFixed(2)
     }));
-    exportToExcel(formatted, `ZRide_DriverPerformance_${search || 'All'}`);
+    exportExcel(formatted, 'DriverPerformance');
   };
 
   return (
@@ -148,7 +149,7 @@ export default function DriverPerformance() {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col justify-between gap-5 border-b border-white/10 pb-6 sm:flex-row sm:items-end">
           <div>
-            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#A7E92F]">City operations / drivers</p>
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#A7E92F]">Drivers</p>
             <h1 className="text-3xl font-extrabold tracking-tight text-white">Driver performance</h1>
             <p className="mt-2 text-sm text-white/50">Ranked by completed rides, acceptance, ratings and cancellations.</p>
           </div>
@@ -164,9 +165,7 @@ export default function DriverPerformance() {
                 value={search}
               />
             </div>
-            <button onClick={handleExportExcel} className="h-12 shrink-0 rounded-xl bg-green-600 hover:bg-green-700 px-4 text-sm font-bold text-white">
-              📥 Export
-            </button>
+            <ExcelExportButton onClick={handleExportExcel} disabled={loading || Boolean(error)} />
           </div>
         </header>
 

@@ -2,11 +2,11 @@ import { useState, lazy, Suspense, useCallback, useEffect, memo } from 'react';
 import { Shell, Toast } from './components/ControlRoom';
 import './index.css';
 import React from 'react';
+import NoInternetBanner from './components/NoInternetBanner';
 
-// --- SECURITY CONFIG - inDrive jaisa secure ---
 const SECURE_ADMIN = {
-  email: "dapp6012@gmail.com", // <-- Yahan apna admin email daalo
-  pass: "hammad55443321" // <-- Yahan strong password daalo
+  email: "dapp6012@gmail.com",
+  pass: "hammad55443321"
 };
 
 class ErrorBoundary extends React.Component {
@@ -92,7 +92,6 @@ export default function App() {
   const [toast, setToast] = useState('');
   const [isAuth, setIsAuth] = useState(() => localStorage.getItem('ZRide_auth') === 'true');
 
-  // 1. GOOGLE SE HIDE KARO + AUTH GUARD
   useEffect(() => {
     document.title = "ZRide Admin";
     let meta = document.querySelector('meta[name="robots"]');
@@ -102,8 +101,6 @@ export default function App() {
       document.head.appendChild(meta);
     }
     meta.content = "noindex, nofollow";
-
-    // Agar auth nahi hai to hamesha login pe bhejo
     if (!isAuth && stage === 'app') {
       setStage('login');
     }
@@ -130,7 +127,6 @@ export default function App() {
   }, [notify]);
 
   const handleChooseRole = useCallback((selected) => {
-    // Role select ke baad seedha login pe bhejo, app pe nahi
     setRole(selected);
     setStage('login');
     notify(`${selected} login required`);
@@ -148,6 +144,9 @@ export default function App() {
 
   return (
     <Suspense fallback={<LoadingFallback />}>
+      {/* 2. BANNER YAHAN ADD KIYA - HAR SCREEN PE DIKHEGA */}
+      <NoInternetBanner />
+
       {stage === 'splash' && <SplashFrontScreen onContinue={() => setStage('role')} />}
       {stage === 'role' && <RoleSelectScreen selected={role} onSelect={handleChooseRole} />}
       {stage === 'login' && <AdminLoginScreen role={role} onLogin={handleLogin} secureConfig={SECURE_ADMIN} />}

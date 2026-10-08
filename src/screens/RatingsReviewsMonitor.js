@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 
 export default function RatingsReviewsMonitor(){
   const [ratings, setRatings] = useState([]);
@@ -41,6 +43,17 @@ export default function RatingsReviewsMonitor(){
     }
   };
 
+  const handleExportExcel = () => exportExcel(ratings.map(rv => ({
+    Rating: rv.stars || rv.rating || 0,
+    Type: rv.type || (rv.ratedTo === 'driver' ? 'Driver Rated' : 'Passenger Rated'),
+    CreatedAt: rv.createdAt ? new Date(rv.createdAt).toLocaleString() : '',
+    From: rv.fromName || rv.raterName || '-',
+    FromRole: rv.fromRole || rv.raterRole || '',
+    To: rv.toName || rv.ratedName || '-',
+    Trip: rv.tripId || rv.rideId || '-',
+    Comment: rv.comment || rv.review || 'No comment',
+  })), 'RatingsReviewsMonitor');
+
   if(loading) return <div className="min-h-screen bg-black text-white p-4">Loading Ratings...</div>
 
   return(
@@ -49,7 +62,7 @@ export default function RatingsReviewsMonitor(){
       
       <div className="flex gap-2 mb-4 flex-wrap">
         <input 
-          placeholder="Search driver, passenger, comment" 
+          placeholder="Search driver, passenger, Ratinds" 
           value={search} 
           onChange={e=>setSearch(e.target.value)}
           className="bg-black text-white border border-white placeholder:text-white/60 p-2 w-full max-w-sm"
@@ -61,6 +74,7 @@ export default function RatingsReviewsMonitor(){
           <option value="driver">Driver Ratings Only</option>
           <option value="passenger">Passenger Ratings Only</option>
         </select>
+        <ExcelExportButton onClick={handleExportExcel} />
       </div>
 
       {error ? <div className="text-red-400 border border-red-500 p-3 rounded">{error}</div> : !ratings.length ? <div className="text-white mt-4">No Ratings Found</div> : (

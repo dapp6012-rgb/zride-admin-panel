@@ -82,7 +82,7 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
       label: 'City Operations', 
       items: [
         { key: 'city-dashboard', label: 'City Dashboard', icon: Building2 },
-        { key: 'add-city', label: 'Add City', icon: MapPin },
+        { key: 'add-city', label: 'Add Country and City', icon: MapPin },
         { key: 'city-onboarding', label: 'Driver Onboarding', icon: Shield },
         { key: 'city-performance', label: 'Driver Performance', icon: Users },
         { key: 'city-vehicles', label: 'Vehicle Type', icon: Car },
@@ -94,7 +94,7 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
       label: 'Drivers & Users', 
       items: [
         { key: 'users', label: 'User Management', icon: Users },
-        { key: 'passenger-history', label: 'Passenger History', icon: History },
+        { key: 'passenger-history', label: 'Users History', icon: History },
       ] 
     },
     { 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { API_BASE_URL as API_URL } from '../lib/api';
-import { exportToExcel } from '../utils/exportExcel';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 
 export default function ComplaintsSupportRider({ setScreen, notify }) {
   const [complaints, setComplaints] = useState([]);
@@ -50,16 +51,16 @@ export default function ComplaintsSupportRider({ setScreen, notify }) {
       TicketID: c.ticketId,
       Role: c.role,
       Type: c.type,
-      RiderName: c.passengerName || 'Rider',
-      RiderID: c.passengerId,
-      DriverName: c.driverName || '-',
+      Rider: `${c.passengerName || 'Rider'} (${c.passengerId || '-'})`,
       RideID: c.rideId || 'General',
+      Driver: c.driverName || '-',
       Description: c.description,
       Status: c.status,
       ContactPreference: c.contactPreference,
-      CreatedAt: c.createdAt ? new Date(c.createdAt).toLocaleString() : c.timestamp ? new Date(c.timestamp).toLocaleString() : '-'
+      CreatedAt: c.createdAt ? new Date(c.createdAt).toLocaleString() : c.timestamp ? new Date(c.timestamp).toLocaleString() : '-',
+      Attachments: (c.attachments || []).map(attachment => typeof attachment === 'string' ? attachment : attachment?.url || attachment?.uri || '').filter(Boolean).join(', '),
     }));
-    exportToExcel(formatted, `ZRide_RiderComplaints_${filter}`);
+    exportExcel(formatted, 'ComplaintsSupportRider');
   };
 
   const filteredList = complaints.filter(c => {
@@ -72,9 +73,9 @@ export default function ComplaintsSupportRider({ setScreen, notify }) {
   return (
     <div style={{ padding: 24, background: '#f5f5f5', minHeight: '100vh' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
-        <h2 style={{ fontWeight: 900 }}>Rider Complaints 🛵 ({filteredList.length})</h2>
+        <h2 style={{ fontWeight: 900 }}>Rider Complaints  ({filteredList.length})</h2>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={handleExportExcel} style={{ padding: '8px 16px', borderRadius: 8, background: '#16a34a', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer' }}>📥 Export Excel</button>
+          <ExcelExportButton onClick={handleExportExcel} />
           <button onClick={fetchComplaints} style={{ padding: '8px 16px', borderRadius: 8, background: '#000', color: '#fff', fontWeight: 700 }}>Refresh</button>
         </div>
       </div>

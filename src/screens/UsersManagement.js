@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
-import { exportToExcel } from '../utils/exportExcel'
+import { exportExcel } from '../utils/exportExcel'
+import ExcelExportButton from '../components/ExcelExportButton'
 
 const API_URL = "http://localhost:3000/api/rider"
 
@@ -47,16 +48,15 @@ export default function UsersManagement() {
 
   const handleExportExcel = () => {
     const formatted = filtered.map(u => ({
-      RiderID: u.riderId || u._id,
-      Name: u.name || "Rider",
+      User: u.name || "Rider",
       Email: u.email || "No Gmail",
       Phone: u.phone || u.phoneNumber || u.mobile || "-",
-      City: u.city || u.userCity || u.location?.city || "-",
-      Country: u.country || u.userCountry || u.location?.country || "-",
-      TotalRides: u.totalRides || 0,
-      Status: u.status || "Unknown"
+      Location: [u.city || u.userCity || u.location?.city, u.country || u.userCountry || u.location?.country].filter(Boolean).join(", ") || "-",
+      Rides: u.totalRides || 0,
+      Status: u.status || "Unknown",
+      Action: u.status === 'Active' ? 'Block' : 'Unblock',
     }))
-    exportToExcel(formatted, `ZRide_Users_${search || 'All'}`)
+    exportExcel(formatted, 'UsersManagement')
   }
 
   const filtered = users.filter(u =>
@@ -71,9 +71,7 @@ export default function UsersManagement() {
     <div className="p-6 bg-black min-h-screen">
       <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-white">User Management ({filtered.length})</h1>
-        <button onClick={handleExportExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold">
-          📥 Export Excel
-        </button>
+        <ExcelExportButton onClick={handleExportExcel} />
       </div>
       <input placeholder="Search..." className="border border-white/10 p-2 rounded w-full max-w-md mb-4 text-white placeholder:text-white/50 bg-[#1a1a1a] outline-none focus:ring-2 focus:ring-[#A7E92F]" value={search} onChange={e => setSearch(e.target.value)} />
       <div className="bg-[#1a1a1a] border border-white/10 rounded shadow overflow-auto">

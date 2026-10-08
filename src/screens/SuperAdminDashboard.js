@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Activity, ArrowUpRight, MapPin, TrendingUp, Users, Car, DollarSign } from 'lucide-react';
-import { Button, ScreenFrame, SectionCard, StatCard, Badge } from '../components/ControlRoom';
+import { Activity, MapPin, TrendingUp, Users, Car, DollarSign } from 'lucide-react';
+import { ScreenFrame, SectionCard, StatCard, Badge } from '../components/ControlRoom';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { API_URL } from '../lib/api';
-import { exportToExcel } from '../utils/exportExcel';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -13,6 +14,19 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
+
+// REAL DATA FILTER - DUMMY HATAO
+function cleanRealList(list) {
+  const dummyKeywords = ['dummy', 'test', 'fake', 'demo', 'unknown', 'null', 'undefined', 'sample', 'all country', 'all city'];
+  return [...new Set(
+    (list || [])
+     .map(v => String(v || '').trim())
+     .filter(v => v.length > 1)
+     .filter(v =>!dummyKeywords.includes(v.toLowerCase()))
+     .filter(v =>!/^city\d+$/i.test(v))
+     .filter(v =>!/^country\d+$/i.test(v))
+  )].sort();
+}
 
 function getDriverCoordinates(driver) {
   const values = [
@@ -96,30 +110,6 @@ function RealMap({ drivers }) {
   )
 }
 
-function exportDashboardCsv(stats, drivers, city, country) {
-  const rows = [
-    ['record_type', 'metric', 'value', 'driver_id', 'name', 'city', 'country', 'latitude', 'longitude', 'location_updated_at'],
-    ['summary', 'total_rides_today', stats.totalRides],
-    ['summary', 'gross_collected_today', stats.gross],
-    ['summary', 'active_drivers', stats.activeDrivers],
-    ['summary', 'active_riders', stats.activeUsers],
-    ['summary', 'pending_rides', stats.pendingRides],
-   ...drivers.map(driver => [
-      'live_driver', '', '', driver.driverId, driver.name, driver.city, driver.country,
-      driver.lat, driver.lng, driver.locationUpdatedAt,
-    ]),
-  ];
-  const csv = rows.map(row => row.map(value => `"${String(value?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
-  const file = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(file);
-  const link = document.createElement('a');
-  const suffix = [country, city].filter(Boolean).join('-').replace(/[^a-z0-9-]/gi, '-');
-  link.href = url;
-  link.download = `zride-live-network${suffix? `-${suffix}` : ''}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
 export default function SuperAdminDashboard({ notify, setScreen }) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -148,9 +138,14 @@ export default function SuperAdminDashboard({ notify, setScreen }) {
         if (!data.success) throw new Error(data.message || 'Dashboard data unavailable');
         if (active) {
           setStats(data.stats);
-          setCities(Array.isArray(data.cities)? data.cities : []);
-          setCountries(Array.isArray(data.countries)? data.countries : []);
-          setLiveDrivers(Array.isArray(data.liveDrivers)? data.liveDrivers : []);
+          // SIRF REAL CITY/COUNTRY SHOW HOGA - DUMMY FILTER
+          setCities(cleanRealList(data.cities));
+          setCountries(cleanRealList(data.countries));
+          setLiveDrivers(Array.isArray(data.liveDrivers)? data.liveDrivers.filter(d => {
+            const city = String(d.city || '').toLowerCase();
+            const country = String(d.country || '').toLowerCase();
+            return!['dummy','test','fake','demo'].includes(city) &&!['dummy','test','fake','demo'].includes(country);
+          }) : []);
           setError('');
         }
       } catch (err) {
@@ -185,10 +180,8 @@ export default function SuperAdminDashboard({ notify, setScreen }) {
       Lng: d.lng,
       LocationUpdatedAt: d.locationUpdatedAt
     }));
-    // Summary + Live Drivers combined export
     const combined = [...summary,...driversSheet];
-    const suffix = [selectedCountry, selectedCity].filter(Boolean).join('-');
-    exportToExcel(combined, `ZRide_Live_Network_${suffix || 'All'}`);
+    exportExcel(combined, 'SuperAdminDashboard');
   };
 
   if (loading &&!stats) return <ScreenFrame eyebrow="Super admin / network pulse" title="Loading..."><div className="w-full h-[60vh] flex items-center justify-center text-white">Fetching live data...</div></ScreenFrame>;
@@ -212,8 +205,8 @@ export default function SuperAdminDashboard({ notify, setScreen }) {
           <option value="">All cities</option>
           {cities.map(city => <option key={city} value={city}>{city}</option>)}
         </select>
-        <Button variant="ghost" disabled={!stats} onClick={() => stats && exportDashboardCsv(stats, liveDrivers, selectedCity, selectedCountry)}><ArrowUpRight size={14} /> Export CSV</Button>
-        <button disabled={!stats} onClick={handleExportExcel} className="rounded-md bg-green-600 hover:bg-green-700 disabled:opacity-50 px-3 py-2 text-sm font-bold text-white">📥 Export Excel</button>
+        {/* EXPORT CSV BUTTON HATA DIYA HAI - SIRF EXCEL RAHEGA */}
+        <ExcelExportButton onClick={handleExportExcel} disabled={!stats} />
       </div>}
     >
       {error && <div role="status" className="mb-3 rounded-md border border-red-400/30 bg-red-950/30 px-3 py-2 text-sm text-red-200">{error}</div>}

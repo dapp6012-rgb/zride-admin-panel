@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { exportToExcel } from '../utils/exportExcel';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 const API_URL = 'http://localhost:3000';
 
 export default function VehicleTypes() {
@@ -86,18 +87,15 @@ export default function VehicleTypes() {
 
   const handleExportExcel = () => {
     const formatted = types.map(t => ({
-      ID: t._id,
-      DisplayName: t.displayName,
-      SystemName: t.name,
       Icon: t.icon,
+      Name: t.displayName,
       Capacity: t.capacity,
+      Base: `Rs. ${t.baseFare}`,
+      PerKM: `Rs. ${t.perKm}/km`,
       City: t.city,
-      BaseFare: t.baseFare,
-      PerKM: t.perKm,
-      PerMinute: t.perMinute,
-      CommissionPercent: t.commission
+      Action: 'Edit / Delete',
     }));
-    exportToExcel(formatted, `ZRide_VehicleTypes_${types.length}`);
+    exportExcel(formatted, 'VehicleTypes');
   };
 
   return (
@@ -105,7 +103,7 @@ export default function VehicleTypes() {
       <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
         <h1 className="text-2xl font-black text-white">Vehicle Types Manager ({types.length})</h1>
         <div className="flex gap-2">
-          <button onClick={handleExportExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-bold">📥 Export Excel</button>
+          <ExcelExportButton onClick={handleExportExcel} />
           <button onClick={fetchTypes} className="bg-white/10 text-white px-4 py-2 rounded-xl text-sm font-bold">🔄 Refresh</button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { API_BASE_URL, API_URL } from '../lib/api';
-import { exportToExcel } from '../utils/exportExcel';
+import { exportExcel } from '../utils/exportExcel';
+import ExcelExportButton from '../components/ExcelExportButton';
 
 const SHOP_API_URL = `${API_URL}/shops`;
 
@@ -61,9 +62,10 @@ export default function AdminShopRequestsScreen({ notify }) {
       OwnerID: shop.ownerId || 'Not provided',
       Status: shop.status,
       SubmittedDate: shop.createdAt ? new Date(shop.createdAt).toLocaleDateString() : 'N/A',
-      SubmittedTime: shop.createdAt ? new Date(shop.createdAt).toLocaleTimeString() : 'N/A'
+      SubmittedTime: shop.createdAt ? new Date(shop.createdAt).toLocaleTimeString() : 'N/A',
+      Images: (shop.shopImages || []).map(image => getShopImageUrl(image)).join(', '),
     }));
-    exportToExcel(formatted, `ZRide_Shops_${filter}`);
+    exportExcel(formatted, 'AdminShopRequests');
   };
 
   const filtered = shops.filter(s => s.status === filter);
@@ -74,9 +76,7 @@ export default function AdminShopRequestsScreen({ notify }) {
     <div className="p-6 space-y-6 text-white">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-white">Shop Requests</h1>
-        <button onClick={handleExportExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">
-          📥 Export Excel
-        </button>
+        <ExcelExportButton onClick={handleExportExcel} />
       </div>
 
       <div className="grid grid-cols-3 gap-4">
