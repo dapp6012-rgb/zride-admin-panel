@@ -44,7 +44,6 @@ export default function DriverOnboarding({ notify }) {
     if (driver.status!== 'rejected') return;
     const driverId = driver.driverId || driver.id || driver._id;
     if (!window.confirm('Delete this rejected driver permanently?')) return;
-
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/admin/drivers/${encodeURIComponent(driverId)}`, {
@@ -105,8 +104,14 @@ export default function DriverOnboarding({ notify }) {
               <h3 style={{fontSize:18, fontWeight:'bold', color:'white'}}>{selected.basicInfo?.name || selected.name} - {selected.driverId}</h3>
               <p style={{color:'white', fontSize:12}}>Status: {selected.status}</p>
               <div style={{marginTop:10, display:'flex', gap:10}}>
-                <Button variant="primary" disabled={loading} onClick={()=>handleAction(selected.driverId, 'approved')}>✅ Approve</Button>
-                <Button variant="ghost" disabled={loading} onClick={()=>handleAction(selected.driverId, 'rejected')} style={{background:'#ff4444', color:'white'}}>❌ Reject</Button>
+                {selected.status === 'approved' ? (
+                  <div style={{background:'#22c55e', color:'white', padding:'8px 16px', borderRadius:20, fontWeight:'bold'}}>✅ Already Approved</div>
+                ) : (
+                  <>
+                    <Button variant="primary" disabled={loading} onClick={()=>handleAction(selected.driverId, 'approved')}>✅ Approve</Button>
+                    <Button variant="ghost" disabled={loading} onClick={()=>handleAction(selected.driverId, 'rejected')} style={{background:'#ff4444', color:'white'}}>❌ Reject</Button>
+                  </>
+                )}
                 <Button variant="ghost" onClick={()=>setSelected(null)}>Close</Button>
               </div>
             </div>
@@ -130,14 +135,7 @@ export default function DriverOnboarding({ notify }) {
               <td style={{display:'flex', gap:8, alignItems:'center'}}>
                 <Button variant="ghost" onClick={() => setSelected(a)}>View All Info</Button>
                 {a.status === 'rejected' && (
-                  <Button
-                    variant="ghost"
-                    disabled={loading}
-                    onClick={() => handleDelete(a)}
-                    style={{background:'#991b1b', color:'white'}}
-                  >
-                    🗑️ Delete
-                  </Button>
+                  <Button variant="ghost" disabled={loading} onClick={() => handleDelete(a)} style={{background:'#991b1b', color:'white'}}>🗑️ Delete</Button>
                 )}
               </td>
             </tr>
@@ -154,7 +152,6 @@ export default function DriverOnboarding({ notify }) {
             </div>
 
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginTop:20}}>
-
               <div style={{background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>👤 Basic Info</h4>
                 <p style={{color:'white'}}><b style={{color:'white'}}>Name:</b> {selected.basicInfo?.name || '-'}</p>
@@ -162,14 +159,12 @@ export default function DriverOnboarding({ notify }) {
                 <p style={{color:'white'}}><b style={{color:'white'}}>CNIC:</b> {selected.basicInfo?.cnic || '-'}</p>
                 <p style={{color:'white'}}><b style={{color:'white'}}>City:</b> {selected.basicInfo?.city || '-'}</p>
                 <p style={{color:'white'}}><b style={{color:'white'}}>Email:</b> {selected.basicInfo?.email || '-'}</p>
-
                 <div style={{marginTop:12}}>
                   <small style={{color:'white'}}>Basic Info Photo</small>
                   {getPic(selected, 'basicInfo.photo', 'basicInfo.profilePhoto', 'basicInfo.driverPhoto', 'photo', 'profilePhoto', 'driverPhoto')?
                     <img src={getPic(selected, 'basicInfo.photo', 'basicInfo.profilePhoto', 'basicInfo.driverPhoto', 'photo', 'profilePhoto', 'driverPhoto')} alt="Basic info profile" style={{display:'block', width:140, height:140, objectFit:'cover', borderRadius:8, marginTop:4, border:'1px solid #444'}} />
                     : <div style={{background:'#333', width:140, height:100, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'white'}}>No Image</div>}
                 </div>
-
                 <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:12}}>
                   <div>
                     <small style={{color:'white'}}>CNIC Front (Basic)</small>
@@ -185,7 +180,6 @@ export default function DriverOnboarding({ notify }) {
                   </div>
                 </div>
               </div>
-
               <div style={{background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>🏍️ Vehicle Info</h4>
                 <p style={{color:'white'}}><b style={{color:'white'}}>Type:</b> {selected.vehicleInfo?.type || selected.vehicleType || '-'}</p>
@@ -195,18 +189,15 @@ export default function DriverOnboarding({ notify }) {
                 <p style={{color:'white'}}><b style={{color:'white'}}>Number Plate:</b> {selected.vehicleInfo?.numberPlate || selected.carNumber || '-'}</p>
                 <p style={{color:'white'}}><b style={{color:'white'}}>Color:</b> {selected.vehicleInfo?.color || '-'}</p>
               </div>
-
               <div style={{background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>🪪 Licence Info</h4>
                 <p style={{color:'white'}}><b style={{color:'white'}}>Licence No:</b> {selected.licenceInfo?.licenceNumber || selected.licenceNumber || '-'}</p>
                 <p style={{color:'white'}}><b style={{color:'white'}}>Expiry:</b> {selected.licenceInfo?.expiry || '-'}</p>
               </div>
-
               <div style={{background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>🤳 Selfie with Licence</h4>
                 {getPic(selected, 'selfie', 'selfieWithLicence', 'basicInfo.selfie', 'documents.selfie')? <img src={getPic(selected, 'selfie', 'selfieWithLicence', 'basicInfo.selfie', 'documents.selfie')} alt="selfie" style={{width:'100%', height:200, objectFit:'cover', borderRadius:8, border:'1px solid #333'}} /> : <p style={{color:'white'}}>No Selfie</p>}
               </div>
-
               <div style={{gridColumn:'span 2', background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>📸 All Uploaded Documents (Real Pics)</h4>
                 <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12}}>
@@ -220,13 +211,27 @@ export default function DriverOnboarding({ notify }) {
               </div>
             </div>
 
-            <div style={{display:'flex', gap:12, marginTop:20, justifyContent:'flex-end'}}>
-              {selected.status === 'rejected' && (
-                <button onClick={() => handleDelete(selected)} disabled={loading} style={{background:'#991b1b', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>🗑️ Delete Rejected Driver</button>
+            {/* ====== FINAL CHANGE - APPROVE KE BAAD BUTTON GAYAB ====== */}
+            <div style={{display:'flex', gap:12, marginTop:20, justifyContent:'flex-end', alignItems:'center'}}>
+              {selected.status === 'approved' ? (
+                <div style={{display:'flex', gap:10, alignItems:'center'}}>
+                  <div style={{background:'#22c55e', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold'}}>✅ Already Approved - No Action Needed</div>
+                  <button onClick={()=>setSelected(null)} style={{background:'#333', color:'white', padding:'12px 24px', borderRadius:8, border:'none', cursor:'pointer'}}>Close</button>
+                </div>
+              ) : selected.status === 'rejected' ? (
+                <>
+                  <button onClick={() => handleDelete(selected)} disabled={loading} style={{background:'#991b1b', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>🗑️ Delete</button>
+                  <div style={{background:'#ef4444', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold'}}>❌ Already Rejected</div>
+                  <button onClick={()=>setSelected(null)} style={{background:'#333', color:'white', padding:'12px 24px', borderRadius:8, border:'none', cursor:'pointer'}}>Close</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={()=>handleAction(selected.driverId, 'rejected')} disabled={loading} style={{background:'#ef4444', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>❌ Reject Driver</button>
+                  <button onClick={()=>handleAction(selected.driverId, 'approved')} disabled={loading} style={{background:'#22c55e', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>✅ Approve & Activate</button>
+                </>
               )}
-              <button onClick={()=>handleAction(selected.driverId, 'rejected')} disabled={loading} style={{background:'#ef4444', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>❌ Reject Driver</button>
-              <button onClick={()=>handleAction(selected.driverId, 'approved')} disabled={loading} style={{background:'#22c55e', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>✅ Approve & Activate</button>
             </div>
+
           </div>
         </div>
       )}

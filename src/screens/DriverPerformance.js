@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ban, Check, Search, Star, Wallet, X } from 'lucide-react';
-import { API_BASE_URL as API_URL } from '../lib/api';
+import { API_URL } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 
@@ -13,12 +13,12 @@ const performanceScore = driver =>
 
 function DriverAvatar({ driver, size = 'large' }) {
   const initials = (driver.name || 'Driver')
-   .trim()
-   .split(/\s+/)
-   .slice(0, 2)
-   .map(part => part[0])
-   .join('')
-   .toUpperCase();
+  .trim()
+  .split(/\s+/)
+  .slice(0, 2)
+  .map(part => part[0])
+  .join('')
+  .toUpperCase();
 
   return (
     <div className={`grid shrink-0 place-items-center rounded-full bg-[#A7E92F] font-extrabold text-black ${size === 'small'? 'h-11 w-11 text-sm' : 'h-14 w-14 text-lg'}`}>
@@ -100,11 +100,12 @@ export default function DriverPerformance() {
     const controller = new AbortController();
     async function fetchDrivers() {
       try {
-        const response = await fetch(`${API_URL}/api/driver/all`, { signal: controller.signal });
+        const response = await fetch(`${API_URL}/driver/all`, { signal: controller.signal });
         if (!response.ok) throw new Error(`Request failed (${response.status})`);
         const data = await response.json();
         if (!Array.isArray(data.drivers)) throw new Error('Unexpected response from driver API');
         setDrivers(data.drivers);
+        setError('');
       } catch (fetchError) {
         if (fetchError.name!== 'AbortError') setError('Unable to load drivers. Check that the API is running and try again.');
       } finally {
@@ -119,9 +120,10 @@ export default function DriverPerformance() {
     () => [...drivers].sort((first, second) => performanceScore(second) - performanceScore(first)),
     [drivers],
   );
+
   const filteredDrivers = rankedDrivers
-   .map((driver, index) => ({ driver, rank: index + 1 }))
-   .filter(({ driver }) => {
+  .map((driver, index) => ({ driver, rank: index + 1 }))
+  .filter(({ driver }) => {
       const query = search.trim().toLowerCase();
       return!query || driver.name?.toLowerCase().includes(query) || driver.phone?.toLowerCase().includes(query);
     });
@@ -170,7 +172,10 @@ export default function DriverPerformance() {
         </header>
 
         {loading? (
-          <div className="py-20 text-center text-sm font-semibold text-white/55" role="status">Loading drivers...</div>
+          <div className="py-20 text-center text-sm font-semibold text-white/55 flex flex-col items-center gap-3" role="status">
+            <div className="w-6 h-6 border-2 border-white/10 border-t-[#A7E92F] rounded-full animate-spin" />
+            Loading drivers...
+          </div>
         ) : error? (
           <div className="rounded-2xl border border-red-400/20 bg-red-400/[0.06] px-5 py-10 text-center text-sm text-red-200" role="alert">{error}</div>
         ) : filteredDrivers.length === 0? (

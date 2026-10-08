@@ -6,7 +6,7 @@ import NoInternetBanner from './components/NoInternetBanner';
 
 const SECURE_ADMIN = {
   email: "dapp6012@gmail.com",
-  pass: "hammad321"
+  pass: "hammad55443321"
 };
 
 class ErrorBoundary extends React.Component {
@@ -37,7 +37,7 @@ const Commission = lazy(() => import('./screens/Commission'));
 const ComplaintsSupportRider = lazy(() => import('./screens/ComplaintsSupportRider'));
 const ComplaintsSupportDriver = lazy(() => import('./screens/ComplaintsSupportDriver'));
 const CallLogs = lazy(() => import('./screens/CallLogs'));
-const PassengerHistory = lazy(() => import('./screens/PassengerHistory'));
+const UsersHistory = lazy(() => import('./screens/UsersHistory'));
 const Notifications = lazy(() => import('./screens/Notifications'));
 const PromoCodes = lazy(() => import('./screens/PromoCodes'));
 const RatingsReviewsMonitor = lazy(() => import('./screens/RatingsReviewsMonitor'));
@@ -60,8 +60,10 @@ const SCREENS_MAP = {
   'zone-management': ZoneManagement, 'add-city': AdminAddCityScreen,
   'admin-add-city': AdminAddCityScreen, 'commission': Commission,
   'users': UsersManagement, 'user-management': UsersManagement,
-  'rides': PassengerHistory, 'live-rides-history': PassengerHistory,
-  'live-passenger-history': PassengerHistory, 'passenger-history': PassengerHistory,
+  'rides': UsersHistory, 'live-rides-history': UsersHistory,
+  'live-passenger-history': UsersHistory, 'passenger-history': UsersHistory,
+  'users-history': UsersHistory, 'users-rides-history': UsersHistory,
+  'user-history': UsersHistory, 'user-rides-history': UsersHistory,
   'complaints': ComplaintsSupportRider, 'complaints-rider': ComplaintsSupportRider,
   'complaints-support': ComplaintsSupportRider, 'complaints-support-rider': ComplaintsSupportRider,
   'complaints-driver': ComplaintsSupportDriver, 'complaints-support-driver': ComplaintsSupportDriver,

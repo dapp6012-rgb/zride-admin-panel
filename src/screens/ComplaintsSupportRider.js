@@ -1,53 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import { API_BASE_URL as API_URL } from '../lib/api';
+import React, { useEffect, useState, useCallback } from 'react';
+import { API_URL } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 
-export default function ComplaintsSupportRider({ setScreen, notify }) {
+export default function ComplaintsSupportRider({ notify }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [actionId, setActionId] = useState(null);
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/complaint/all`);
+      const res = await fetch(`${API_URL}/complaint/all`);
       const data = await res.json();
       setComplaints(data.complaints?.filter(c => c.role === 'rider' || c.role === 'passenger') || []);
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchComplaints();
+    } catch (e) { console.log(e); }
+    finally { setLoading(false); }
   }, []);
+
+  useEffect(() => { fetchComplaints(); }, [fetchComplaints]);
 
   const handleResolve = async (id) => {
     if(!window.confirm("Resolve karna hai?")) return;
+    setActionId(id);
     try {
-      await fetch(`${API_URL}/api/complaint/${id}/resolve`, { method: 'PUT' });
-      setComplaints(prev => prev.map(c => c._id === id ? { ...c, status: 'resolved' } : c));
-      notify?.("Complaint resolved");
-    } catch(e) {
-      alert("Error");
-    }
+      const res = await fetch(`${API_URL}/complaint/${id}/resolve`, { method: 'PUT' });
+      if(!res.ok) throw new Error();
+      setComplaints(prev => prev.map(c => c._id===id? {...c, status:'resolved'} : c));
+      notify?.("Rider complaint resolved ✅");
+    } catch { notify?.("❌ Error"); }
+    finally { setActionId(null); }
   };
 
   const handleDelete = async (id) => {
     if(!window.confirm("Delete karni hai?")) return;
+    setActionId(id);
     try {
-      await fetch(`${API_URL}/api/complaint/${id}`, { method: 'DELETE' });
-      setComplaints(prev => prev.filter(c => c._id !== id));
-    } catch(e) {
-      alert("Error");
-    }
+      const res = await fetch(`${API_URL}/complaint/${id}`, { method: 'DELETE' });
+      if(!res.ok) throw new Error();
+      setComplaints(prev => prev.filter(c => c._id!==id));
+      notify?.("Complaint deleted 🗑️");
+    } catch { notify?.("❌ Delete failed"); }
+    finally { setActionId(null); }
   };
 
+  const filteredList = complaints.filter(c => filter==='all'? true : c.status===filter);
+
   const handleExportExcel = () => {
-    const formatted = filteredList.map(c => ({
+    exportExcel(filteredList.map(c=>({
       TicketID: c.ticketId,
       Role: c.role,
       Type: c.type,
@@ -56,73 +57,50 @@ export default function ComplaintsSupportRider({ setScreen, notify }) {
       Driver: c.driverName || '-',
       Description: c.description,
       Status: c.status,
-      ContactPreference: c.contactPreference,
-      CreatedAt: c.createdAt ? new Date(c.createdAt).toLocaleString() : c.timestamp ? new Date(c.timestamp).toLocaleString() : '-',
-      Attachments: (c.attachments || []).map(attachment => typeof attachment === 'string' ? attachment : attachment?.url || attachment?.uri || '').filter(Boolean).join(', '),
-    }));
-    exportExcel(formatted, 'ComplaintsSupportRider');
+      CreatedAt: c.createdAt? new Date(c.createdAt).toLocaleString() : '-',
+    })), 'Rider_Complaints');
   };
 
-  const filteredList = complaints.filter(c => {
-    if(filter === 'all') return true;
-    return c.status === filter;
-  });
-
-  if(loading) return <div style={{padding:40, textAlign:'center'}}>Loading rider complaints...</div>;
+  if(loading) return <div className="min-h-screen bg-black text-white p-10 flex gap-3 items-center"><div className="w-5 h-5 border-2 border-white/10 border-t-[#A7E92F] rounded-full animate-spin" /> Loading rider complaints...</div>;
 
   return (
-    <div style={{ padding: 24, background: '#f5f5f5', minHeight: '100vh' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
-        <h2 style={{ fontWeight: 900 }}>Rider Complaints  ({filteredList.length})</h2>
-        <div style={{ display: 'flex', gap: 10 }}>
+    <div className="p-6 bg-black min-h-screen text-white space-y-5">
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <h2 className="text-xl font-bold">Rider Complaints ({filteredList.length})</h2>
+        <div className="flex gap-2">
+          <button onClick={fetchComplaints} className="px-4 py-2 rounded-xl bg-white/10 text-sm font-bold hover:bg-white/20">↻ Refresh</button>
           <ExcelExportButton onClick={handleExportExcel} />
-          <button onClick={fetchComplaints} style={{ padding: '8px 16px', borderRadius: 8, background: '#000', color: '#fff', fontWeight: 700 }}>Refresh</button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-        {['all', 'pending', 'resolved'].map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 16px', borderRadius: 20, border: '1px solid #000', background: filter === f ? '#000' : '#fff', color: filter === f ? '#A7E92F' : '#000', fontWeight: 700, textTransform: 'capitalize' }}>{f}</button>
+      <div className="flex gap-2 bg-[#1a1a1a] p-1 rounded-xl w-fit border border-white/10">
+        {['all','pending','resolved'].map(f=>(
+          <button key={f} onClick={()=>setFilter(f)} className={`px-5 py-2 rounded-lg text-xs font-bold uppercase ${filter===f? 'bg-[#A7E92F] text-black' : 'text-white/60 hover:text-white'}`}>{f}</button>
         ))}
       </div>
 
-      {filteredList.length === 0 ? (
-        <div style={{ textAlign: 'center', marginTop: 60, color: '#888' }}>No rider complaints found</div>
-      ) : (
-        <div style={{ display: 'grid', gap: 16 }}>
-          {filteredList.map(c => (
-            <div key={c._id} style={{ background: '#fff', borderRadius: 14, padding: 16, borderLeft: `6px solid ${c.status === 'resolved' ? '#00CC66' : '#FF4444'}`, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div>
-                  <span style={{ background: '#000', color: '#A7E92F', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 900 }}>{c.ticketId}</span>
-                  <span style={{ marginLeft: 8, background: '#E0F7FF', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800 }}>{c.role?.toUpperCase()} - {c.type}</span>
-                </div>
-                <span style={{ fontSize: 12, color: '#888' }}>{new Date(c.createdAt || c.timestamp).toLocaleString()}</span>
-              </div>
-
-              <div style={{ marginTop: 10 }}>
-                <p style={{ margin: 0, fontWeight: 700 }}>{c.passengerName || 'Rider'} - <span style={{ fontWeight: 400, color: '#666' }}>{c.passengerId}</span></p>
-                <p style={{ margin: '4px 0', fontSize: 13, color: '#333' }}><b>Ride:</b> {c.rideId || 'General'} {c.driverName ? `| Driver: ${c.driverName}` : ''}</p>
-                <p style={{ margin: '8px 0', background: '#f9f9f9', padding: 10, borderRadius: 8, fontSize: 14 }}>{c.description}</p>
-                {c.attachments?.length > 0 && <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>{c.attachments.map((attachment, i) => {
-                  const src = typeof attachment === 'string' ? attachment : attachment?.dataUrl || attachment?.url || attachment?.uri;
-                  return src ? <a key={`${c._id}-attachment-${i}`} href={src} target="_blank" rel="noreferrer"><img src={src} alt={`Complaint evidence ${i + 1}`} loading="lazy" style={{ width: 100, height: 100, borderRadius: 8, objectFit: 'cover', border: '1px solid #e5e7eb', cursor: 'zoom-in' }} /></a> : null;
-                })}</div>}
-              </div>
-
-              <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-                <span style={{ padding: '4px 10px', borderRadius: 20, background: c.status === 'pending' ? '#FFE0E0' : '#E0FFE0', fontSize: 12, fontWeight: 800 }}>{c.status?.toUpperCase()}</span>
-                <span style={{ fontSize: 12, color: '#666' }}>Contact: {c.contactPreference}</span>
-              </div>
-
-              <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-                {c.status !== 'resolved' && <button onClick={() => handleResolve(c._id)} style={{ flex: 1, padding: 10, borderRadius: 8, background: '#00FF7F', border: 'none', fontWeight: 900, cursor: 'pointer' }}>Resolved</button>}
-                <button onClick={() => handleDelete(c._id)} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, background: '#fff', border: '1px solid #FF4444', color: '#FF4444', fontWeight: 800, cursor: 'pointer' }}>Delete</button>
-              </div>
+      {filteredList.length===0? <div className="text-center py-16 bg-[#1a1a1a] rounded-xl border border-dashed border-white/10 text-white/30">No {filter} rider complaints</div>
+      : <div className="grid gap-3">
+        {filteredList.map(c=>(
+          <div key={c._id} className="bg-[#1a1a1a] rounded-xl border border-white/10 p-4 border-l-4" style={{borderLeftColor: c.status==='resolved'? '#22c55e' : '#ef4444'}}>
+            <div className="flex flex-wrap justify-between gap-2">
+              <div className="flex gap-2"><span className="bg-black border border-white/10 text-[#A7E92F] px-2.5 py-1 rounded-full text-[11px] font-bold">{c.ticketId}</span><span className="bg-blue-500/15 text-blue-400 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase">{c.role} - {c.type}</span></div>
+              <span className="text-xs text-white/40">{new Date(c.createdAt||c.timestamp).toLocaleString()}</span>
             </div>
-          ))}
-        </div>
-      )}
+            <div className="mt-3 space-y-1">
+              <p className="font-bold text-sm">{c.passengerName || 'Rider'} <span className="font-normal text-white/50">({c.passengerId})</span></p>
+              <p className="text-xs text-white/60">Ride: {c.rideId || 'General'} {c.driverName? `| Driver: ${c.driverName}` : ''}</p>
+              <p className="mt-2 bg-black/60 p-3 rounded-lg text-sm border border-white/5">{c.description}</p>
+              {c.attachments?.length>0 && <div className="flex gap-2 flex-wrap mt-2">{c.attachments.map((a,i)=>{const src=typeof a==='string'? a : a?.url||a?.uri; return src? <a key={i} href={src} target="_blank" rel="noreferrer"><img src={src} alt="" className="w-20 h-20 rounded-lg object-cover border border-white/10" /></a>:null})}</div>}
+            </div>
+            <div className="flex gap-2 mt-4">
+              {c.status!=='resolved' && <button disabled={actionId===c._id} onClick={()=>handleResolve(c._id)} className="flex-1 bg-[#A7E92F] text-black font-bold py-2.5 rounded-xl text-sm disabled:opacity-50">{actionId===c._id? '...' : '✓ Resolve'}</button>}
+              <button disabled={actionId===c._id} onClick={()=>handleDelete(c._id)} className="flex-1 bg-red-500/10 text-red-400 border border-red-500/20 font-bold py-2.5 rounded-xl text-sm disabled:opacity-50">🗑️ Delete</button>
+            </div>
+            <span className={`mt-2 inline-block text-[11px] px-2.5 py-1 rounded-full font-bold uppercase ${c.status==='pending'? 'bg-red-500/15 text-red-400' : 'bg-green-500/15 text-green-400'}`}>{c.status}</span>
+          </div>
+        ))}
+      </div>}
     </div>
   );
 }
