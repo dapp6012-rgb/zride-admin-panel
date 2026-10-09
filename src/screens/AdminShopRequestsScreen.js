@@ -5,12 +5,29 @@ import ExcelExportButton from '../components/ExcelExportButton';
 
 const SHOP_API_URL = `${API_URL}/shops`;
 
-// Professional image handler - null safe
 const getShopImageUrl = (image) => {
   if (!image || typeof image!== 'string') return '';
   if (/^https?:\/\//i.test(image)) return image;
   return `${API_BASE_URL}${image.startsWith('/')? '' : '/'}${image}`;
 };
+
+// AI LOGIC FOR SHOPS - YAHI ADD HUA HAI
+function runShopAiCheck(shop) {
+  const cnic = shop?.cnic || '';
+  const pattern = /^\d{5}-\d{7}-\d$/;
+  const images = shop?.shopImages?.length || 0;
+
+  if (!cnic ||!pattern.test(cnic)) {
+    return { status: 'AI_REJECTED', reason: 'CNIC format galat hai (42101-1234567-1)', score: '20%' };
+  }
+  if (images < 1) {
+    return { status: 'AI_REJECTED', reason: 'Shop image nahi hai', score: '30%' };
+  }
+  if (!shop.shopName || shop.shopName.length < 3) {
+    return { status: 'AI_REJECTED', reason: 'Shop name chota hai', score: '40%' };
+  }
+  return { status: 'AI_APPROVED', reason: 'CNIC OK, Images OK', score: '90%' };
+}
 
 export default function AdminShopRequestsScreen({ notify }) {
   const [shops, setShops] = useState([]);
@@ -25,7 +42,14 @@ export default function AdminShopRequestsScreen({ notify }) {
       const data = await res.json();
       if (!res.ok || data.success === false) throw new Error(data.message || 'Could not load shop requests');
       const list = Array.isArray(data)? data : data.shops || data.data || [];
-      setShops(list);
+
+      // AI CHECK ADD KARO HAR SHOP PAR
+      const withAi = list.map(shop => ({
+       ...shop,
+        aiChecks: shop.aiChecks || runShopAiCheck(shop)
+      }));
+
+      setShops(withAi);
       setError('');
     } catch (e) {
       console.error(e);
@@ -43,7 +67,6 @@ export default function AdminShopRequestsScreen({ notify }) {
 
   const updateStatus = async (id, status) => {
     if (!window.confirm(`Are you sure you want to ${status} this shop?`)) return;
-
     setActionId(id);
     try {
       const response = await fetch(`${SHOP_API_URL}/${id}/status`, {
@@ -53,7 +76,6 @@ export default function AdminShopRequestsScreen({ notify }) {
       });
       const data = await response.json();
       if (!response.ok || data.success === false) throw new Error(data.message || 'Could not update shop status');
-
       notify?.(`Shop ${status} successfully ✅`);
       await fetchShops();
     } catch (e) {
@@ -64,17 +86,32 @@ export default function AdminShopRequestsScreen({ notify }) {
     }
   };
 
+  // DELETE FIX - YAHAN FIX KIYA HAI
   const handleDelete = async (id) => {
+    if (!id) {
+      alert('Shop ID missing');
+      return;
+    }
     if (!window.confirm('Delete this rejected shop permanently? This cannot be undone.')) return;
     setActionId(id);
     try {
-      const res = await fetch(`${SHOP_API_URL}/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok || data.success === false) throw new Error(data.message || 'Delete failed');
+      console.log('Deleting shop:', id);
+      const res = await fetch(`${SHOP_API_URL}/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = { success: res.ok }; }
+
+      if (!res.ok || data.success === false) throw new Error(data.message || `Delete failed ${res.status}`);
       notify?.('Shop deleted permanently 🗑️');
+      setShops(prev => prev.filter(s => String(s._id)!== String(id)));
       await fetchShops();
     } catch (e) {
-      alert(e.message);
+      console.error('Delete error', e);
+      alert('Delete error: ' + e.message);
+      notify?.('Delete error: ' + e.message);
     } finally {
       setActionId(null);
     }
@@ -91,8 +128,9 @@ export default function AdminShopRequestsScreen({ notify }) {
       Address: shop.address || 'Not provided',
       OwnerID: shop.ownerId || 'Not provided',
       Status: shop.status,
+      AI_Status: shop.aiChecks?.status || 'No AI',
+      AI_Reason: shop.aiChecks?.reason || '',
       SubmittedDate: shop.createdAt? new Date(shop.createdAt).toLocaleDateString() : 'N/A',
-      SubmittedTime: shop.createdAt? new Date(shop.createdAt).toLocaleTimeString() : 'N/A',
       Images: (shop.shopImages || []).map(image => getShopImageUrl(image)).join(', '),
     }));
     exportExcel(formatted, 'AdminShopRequests');
@@ -114,12 +152,12 @@ export default function AdminShopRequestsScreen({ notify }) {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-white">Shop Requests</h1>
-          <p className="text-xs text-white/60 mt-1">Manage merchant shop verifications</p>
+          <p className="text-xs text-white/60 mt-1">Manage merchant shop verifications + AI Check</p>
         </div>
         <ExcelExportButton onClick={handleExportExcel} />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/10">
           <p className="text-2xl font-bold text-white">{shops.length}</p>
           <p className="text-xs text-white/60">Total</p>
@@ -129,8 +167,12 @@ export default function AdminShopRequestsScreen({ notify }) {
           <p className="text-xs text-white/60">Pending</p>
         </div>
         <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/10">
-          <p className="text-2xl font-bold text-green-400">{shops.filter(s=>s.status==='approved').length}</p>
-          <p className="text-xs text-white/60">Approved</p>
+          <p className="text-2xl font-bold text-green-400">{shops.filter(s=>s.aiChecks?.status==='AI_APPROVED').length}</p>
+          <p className="text-xs text-white/60">AI Approved</p>
+        </div>
+        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/10">
+          <p className="text-2xl font-bold text-red-400">{shops.filter(s=>s.aiChecks?.status==='AI_REJECTED').length}</p>
+          <p className="text-xs text-white/60">AI Rejected</p>
         </div>
       </div>
 
@@ -162,6 +204,13 @@ export default function AdminShopRequestsScreen({ notify }) {
                   <p className="text-xs text-white/80">🪪 CNIC: {shop.cnic}</p>
                   <p className="text-xs text-white/60">📍 {shop.address || 'Not provided'}</p>
                   <p className="text-xs text-white/40">Owner ID: {shop.ownerId || 'N/A'} | {shop.createdAt? new Date(shop.createdAt).toLocaleString() : 'Date unavailable'}</p>
+
+                  {/* AI BADGE - ADD HUA HAI */}
+                  <div style={{marginTop:6, display:'flex', gap:6}}>
+                    <span className={`text-[11px] px-2 py-1 rounded-full font-bold ${shop.aiChecks?.status==='AI_APPROVED'? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+                      🤖 {shop.aiChecks?.status} {shop.aiChecks?.score} - {shop.aiChecks?.reason}
+                    </span>
+                  </div>
 
                   {shop.shopImages?.length > 0 && (
                     <div className="flex flex-wrap gap-2 pt-3">
@@ -206,9 +255,9 @@ export default function AdminShopRequestsScreen({ notify }) {
                       <button
                         disabled={actionId === shop._id}
                         onClick={() => handleDelete(shop._id)}
-                        className="px-3 py-1.5 rounded-full bg-red-900/30 text-red-400 text-[11px] font-bold border border-red-900/50 hover:bg-red-900/50 disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-full bg-red-900/30 text-red-400 text-[11px] font-bold border border-red-900/50 hover:bg-red-900/50 disabled:opacity-50 cursor-pointer"
                       >
-                        🗑️ Delete
+                        {actionId === shop._id? 'Deleting...' : '🗑️ Delete'}
                       </button>
                     )}
                   </div>

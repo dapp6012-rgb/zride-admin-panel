@@ -71,6 +71,7 @@ export default function DriverOnboarding({ notify }) {
       Email: a.basicInfo?.email || a.email || '-',
       Vehicle: `${a.vehicleInfo?.model || a.vehicleModel || '-'} ${a.vehicleInfo?.numberPlate || a.carNumber || ''}`.trim(),
       Status: a.status || '',
+      AI_Status: a.aiChecks?.status || 'No AI',
       Action: a.status === 'rejected' ? 'View All Info / Delete' : 'View All Info',
     }));
     exportExcel(formatted, 'DriverOnboarding');
@@ -86,6 +87,13 @@ export default function DriverOnboarding({ notify }) {
     return null;
   };
 
+  // AI BADGE HELPER - YAHI ADD HUA HAI
+  const getAiBadge = (ai) => {
+    if (!ai) return <Badge tone="warn">No AI Check</Badge>;
+    if (ai.status === 'AI_APPROVED') return <Badge tone="good">🤖 AI: APPROVED {ai.faceScore || ''}</Badge>;
+    return <Badge tone="bad">🤖 AI: {ai.status?.replace('AI_','') || 'REJECTED'} </Badge>;
+  };
+
   return (
     <div className="text-white">
     <ScreenFrame title="Driver Verification Center" description="Real InDrive style verification - All driver docs." actions={<div style={{display:'flex', gap:8}}><ExcelExportButton onClick={handleExportExcel} /></div>}>
@@ -97,12 +105,22 @@ export default function DriverOnboarding({ notify }) {
             <div className="stat"><div className="stat-label text-white">Approved</div><div className="stat-value text-white">{applicants.filter(a=>a.status==='approved').length}</div></div>
             <div className="stat"><div className="stat-label text-white">Rejected</div><div className="stat-value text-white">{applicants.filter(a=>a.status==='rejected').length}</div></div>
           </div>
+          <div style={{marginTop:10, display:'flex', gap:8}}>
+            <span style={{color:'#22c55e'}}>🤖 AI Approved: {applicants.filter(a=>a.aiChecks?.status==='AI_APPROVED').length}</span>
+            <span style={{color:'#ef4444'}}>🤖 AI Rejected: {applicants.filter(a=>a.aiChecks?.status!=='AI_APPROVED').length}</span>
+          </div>
         </SectionCard>
         <SectionCard title="Selected Driver" meta="DETAIL">
           {selected? (
             <div className="text-white">
               <h3 style={{fontSize:18, fontWeight:'bold', color:'white'}}>{selected.basicInfo?.name || selected.name} - {selected.driverId}</h3>
-              <p style={{color:'white', fontSize:12}}>Status: {selected.status}</p>
+              <p style={{color:'white', fontSize:12}}>Status: {selected.status} | {selected.aiChecks?.status || 'No AI'}</p>
+              {selected.aiChecks && (
+                <div style={{background: selected.aiChecks.status==='AI_APPROVED' ? '#052e16' : '#450a0a', padding:8, borderRadius:8, marginTop:8, fontSize:12}}>
+                  <b>AI Reason:</b> {selected.aiChecks.reason} <br/>
+                  <b>Face Score:</b> {selected.aiChecks.faceScore} | <b>CNIC:</b> {selected.aiChecks.cnicNumber} | Valid: {String(selected.aiChecks.isCNICValid)}
+                </div>
+              )}
               <div style={{marginTop:10, display:'flex', gap:10}}>
                 {selected.status === 'approved' ? (
                   <div style={{background:'#22c55e', color:'white', padding:'8px 16px', borderRadius:20, fontWeight:'bold'}}>✅ Already Approved</div>
@@ -124,7 +142,7 @@ export default function DriverOnboarding({ notify }) {
           title={`All Drivers (${applicants.length})`}
           description="Driver app se real data"
           rows={applicants}
-          columns={['Driver', 'CNIC/Phone', 'Gmail', 'Vehicle', 'Status', 'Action']}
+          columns={['Driver', 'CNIC/Phone', 'Gmail', 'Vehicle', 'Status', 'AI Check', 'Action']}
           renderRow={a => (
             <tr key={a._id} style={{cursor:'pointer', color:'white'}}>
               <td style={{color:'white'}}><b style={{color:'white'}}>{a.basicInfo?.name || a.name || 'Unknown'}</b><small style={{ display: 'block', color: 'white' }}>{a.driverId}</small></td>
@@ -132,6 +150,7 @@ export default function DriverOnboarding({ notify }) {
               <td style={{color:'white'}}>{a.basicInfo?.email || a.email || '-'}</td>
               <td style={{color:'white'}}><span style={{color:'white'}}>{a.vehicleInfo?.model || a.vehicleModel || '-'} {a.vehicleInfo?.numberPlate || a.carNumber || ''}</span></td>
               <td><Badge tone={a.status==='approved'?'good':a.status==='rejected'?'bad':'warn'}>{a.status}</Badge></td>
+              <td>{getAiBadge(a.aiChecks)}</td>
               <td style={{display:'flex', gap:8, alignItems:'center'}}>
                 <Button variant="ghost" onClick={() => setSelected(a)}>View All Info</Button>
                 {a.status === 'rejected' && (
@@ -150,6 +169,17 @@ export default function DriverOnboarding({ notify }) {
               <h2 style={{fontSize:22, fontWeight:'bold', color:'white'}}>Driver Full Verification - {selected.basicInfo?.name || selected.name}</h2>
               <Button variant="ghost" onClick={()=>setSelected(null)}>X Close</Button>
             </div>
+
+            {selected.aiChecks && (
+              <div style={{background: selected.aiChecks.status==='AI_APPROVED' ? '#14532d' : '#7f1d1d', padding:16, borderRadius:12, marginTop:16, display:'flex', justifyContent:'space-between'}}>
+                <div>
+                  <h3 style={{fontWeight:'bold'}}>🤖 AI Verification Result: {selected.aiChecks.status}</h3>
+                  <p style={{fontSize:13, marginTop:4}}>Reason: {selected.aiChecks.reason}</p>
+                  <p style={{fontSize:12}}>CNIC: {selected.aiChecks.cnicNumber} | Face: {selected.aiChecks.faceScore} | Valid: {String(selected.aiChecks.isCNICValid)}</p>
+                </div>
+                <div style={{fontSize:30}}>{selected.aiChecks.status==='AI_APPROVED' ? '✅' : '❌'}</div>
+              </div>
+            )}
 
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginTop:20}}>
               <div style={{background:'#272727', padding:16, borderRadius:12, color:'white'}}>
@@ -211,7 +241,6 @@ export default function DriverOnboarding({ notify }) {
               </div>
             </div>
 
-            {/* ====== FINAL CHANGE - APPROVE KE BAAD BUTTON GAYAB ====== */}
             <div style={{display:'flex', gap:12, marginTop:20, justifyContent:'flex-end', alignItems:'center'}}>
               {selected.status === 'approved' ? (
                 <div style={{display:'flex', gap:10, alignItems:'center'}}>
