@@ -20,7 +20,12 @@ export default function DriverOnboarding({ notify }) {
 
   useEffect(() => { fetchDrivers(); const id = setInterval(fetchDrivers, 5000); return () => clearInterval(id); }, []);
 
-  const handleAction = async (driverId, status) => {
+  const handleAction = async (driverObj, status) => {
+    const driverId = driverObj?.driverId || driverObj?.id || driverObj?._id;
+    if(!driverId){
+      notify('Error: driverId not found');
+      return;
+    }
     const nextStatus = status === 'rejected'? 'rejected' : 'approved';
     setLoading(true);
     try {
@@ -30,7 +35,7 @@ export default function DriverOnboarding({ notify }) {
         body: JSON.stringify({ status: nextStatus })
       });
       const result = await res.json();
-      if (!res.ok || result.success === false ||!result.driver) {
+      if (!res.ok || result.success === false) {
         throw new Error(result.message || `Approval API returned ${res.status}`);
       }
       notify(nextStatus === 'approved'? 'Driver Approved ✅' : 'Driver Rejected ❌');
@@ -87,7 +92,6 @@ export default function DriverOnboarding({ notify }) {
     return null;
   };
 
-  // AI BADGE HELPER - YAHI ADD HUA HAI
   const getAiBadge = (ai) => {
     if (!ai) return <Badge tone="warn">No AI Check</Badge>;
     if (ai.status === 'AI_APPROVED') return <Badge tone="good">🤖 AI: APPROVED {ai.faceScore || ''}</Badge>;
@@ -126,8 +130,8 @@ export default function DriverOnboarding({ notify }) {
                   <div style={{background:'#22c55e', color:'white', padding:'8px 16px', borderRadius:20, fontWeight:'bold'}}>✅ Already Approved</div>
                 ) : (
                   <>
-                    <Button variant="primary" disabled={loading} onClick={()=>handleAction(selected.driverId, 'approved')}>✅ Approve</Button>
-                    <Button variant="ghost" disabled={loading} onClick={()=>handleAction(selected.driverId, 'rejected')} style={{background:'#ff4444', color:'white'}}>❌ Reject</Button>
+                    <Button variant="primary" disabled={loading} onClick={()=>handleAction(selected, 'approved')}>✅ Approve</Button>
+                    <Button variant="ghost" disabled={loading} onClick={()=>handleAction(selected, 'rejected')} style={{background:'#ff4444', color:'white'}}>❌ Reject</Button>
                   </>
                 )}
                 <Button variant="ghost" onClick={()=>setSelected(null)}>Close</Button>
@@ -255,8 +259,8 @@ export default function DriverOnboarding({ notify }) {
                 </>
               ) : (
                 <>
-                  <button onClick={()=>handleAction(selected.driverId, 'rejected')} disabled={loading} style={{background:'#ef4444', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>❌ Reject Driver</button>
-                  <button onClick={()=>handleAction(selected.driverId, 'approved')} disabled={loading} style={{background:'#22c55e', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>✅ Approve & Activate</button>
+                  <button onClick={()=>handleAction(selected, 'rejected')} disabled={loading} style={{background:'#ef4444', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>❌ Reject Driver</button>
+                  <button onClick={()=>handleAction(selected, 'approved')} disabled={loading} style={{background:'#22c55e', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>✅ Approve & Activate</button>
                 </>
               )}
             </div>
