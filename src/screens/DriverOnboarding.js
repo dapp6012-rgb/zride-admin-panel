@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Badge, DataScreen, SectionCard, ScreenFrame } from '../components/ControlRoom';
 import { API_BASE_URL as API_URL } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
@@ -9,26 +9,43 @@ export default function DriverOnboarding({ notify }) {
   const [applicants, setApplicants] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
+  const intervalRef = useRef(null);
 
   const fetchDrivers = async () => {
     try {
       const res = await fetch(`${API_URL}/api/admin/drivers`);
       const data = await res.json();
-      setApplicants(data.drivers || data.data || []);
+      const list = data.drivers || data.data || [];
+      setApplicants(list);
+      // Selected ko bhi update rakho taake stale na ho
+      if (selected) {
+        const updated = list.find(d => String(d._id) === String(selected._id) || String(d.driverId) === String(selected.driverId));
+        if (updated) setSelected(updated);
+      }
     } catch(e){ console.log(e) }
   };
 
-  useEffect(() => { fetchDrivers(); const id = setInterval(fetchDrivers, 5000); return () => clearInterval(id); }, []);
+  useEffect(() => { 
+    fetchDrivers(); 
+    intervalRef.current = setInterval(fetchDrivers, 10000); // 5 se 10 sec kiya
+    return () => clearInterval(intervalRef.current); 
+  }, []);
 
   const handleAction = async (driverObj, status) => {
-    const driverId = driverObj?.driverId || driverObj?.id || driverObj?._id;
+    // FIX: _id ko priority do, yehi 100% kaam karta hai
+    const driverId = driverObj?._id || driverObj?.driverId || driverObj?.id;
     if(!driverId){
       notify('Error: driverId not found');
       return;
     }
     const nextStatus = status === 'rejected'? 'rejected' : 'approved';
+    
+    // Polling roko jab action ho raha hai
+    clearInterval(intervalRef.current);
     setLoading(true);
+    
     try {
+      console.log('Approving:', driverId, '->', nextStatus);
       const res = await fetch(`${API_URL}/api/admin/drivers/${encodeURIComponent(driverId)}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,19 +53,26 @@ export default function DriverOnboarding({ notify }) {
       });
       const result = await res.json();
       if (!res.ok || result.success === false) {
-        throw new Error(result.message || `Approval API returned ${res.status}`);
+        throw new Error(result.message || `API returned ${res.status}`);
       }
       notify(nextStatus === 'approved'? 'Driver Approved ✅' : 'Driver Rejected ❌');
       setSelected(null);
       await fetchDrivers();
-    } catch(e){ notify('Error: '+e.message) }
-    setLoading(false);
+    } catch(e){ 
+      console.log('Approve error:', e);
+      notify('Error: '+e.message) 
+    } finally {
+      setLoading(false);
+      // Polling dubara start
+      intervalRef.current = setInterval(fetchDrivers, 10000);
+    }
   };
 
   const handleDelete = async (driver) => {
     if (driver.status!== 'rejected') return;
-    const driverId = driver.driverId || driver.id || driver._id;
+    const driverId = driver._id || driver.driverId || driver.id;
     if (!window.confirm('Delete this rejected driver permanently?')) return;
+    clearInterval(intervalRef.current);
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/admin/drivers/${encodeURIComponent(driverId)}`, {
@@ -58,15 +82,17 @@ export default function DriverOnboarding({ notify }) {
       if (!res.ok || result.success === false) {
         throw new Error(result.message || `Delete API returned ${res.status}`);
       }
-      if (selected && String(selected.driverId || selected.id || selected._id) === String(driverId)) {
+      if (selected && (String(selected._id) === String(driverId) || String(selected.driverId) === String(driverId))) {
         setSelected(null);
       }
       notify('Rejected driver deleted ✅');
       await fetchDrivers();
     } catch (e) {
       notify('Delete error: ' + e.message);
+    } finally {
+      setLoading(false);
+      intervalRef.current = setInterval(fetchDrivers, 10000);
     }
-    setLoading(false);
   };
 
   const handleExportExcel = () => {
@@ -82,12 +108,19 @@ export default function DriverOnboarding({ notify }) {
     exportExcel(formatted, 'DriverOnboarding');
   };
 
+  // FIX: /uploads/ path ko bhi allow kiya, pehle sirf base64 allow tha
   const getPic = (obj,...keys) => {
     for (let k of keys) {
       const parts = k.split('.');
       let val = obj;
       for (let p of parts) { val = val?.[p]; }
-      if (val && typeof val === 'string' && val.length > 50 &&!/^(file|content):\/\//i.test(val)) return val;
+      if (!val || typeof val !== 'string') continue;
+      // Agar /uploads/ se start ho raha hai to direct return karo
+      if (val.startsWith('/uploads/')) {
+        return `${API_URL}${val}`;
+      }
+      if (val.startsWith('http')) return val;
+      if (val.length > 50 &&!/^(file|content):\/\//i.test(val)) return val;
     }
     return null;
   };
@@ -130,8 +163,8 @@ export default function DriverOnboarding({ notify }) {
                   <div style={{background:'#22c55e', color:'white', padding:'8px 16px', borderRadius:20, fontWeight:'bold'}}>✅ Already Approved</div>
                 ) : (
                   <>
-                    <Button variant="primary" disabled={loading} onClick={()=>handleAction(selected, 'approved')}>✅ Approve</Button>
-                    <Button variant="ghost" disabled={loading} onClick={()=>handleAction(selected, 'rejected')} style={{background:'#ff4444', color:'white'}}>❌ Reject</Button>
+                    <Button variant="primary" disabled={loading} onClick={()=>handleAction(selected, 'approved')}>{loading ? '...' : '✅ Approve'}</Button>
+                    <Button variant="ghost" disabled={loading} onClick={()=>handleAction(selected, 'rejected')} style={{background:'#ff4444', color:'white'}}>{loading ? '...' : '❌ Reject'}</Button>
                   </>
                 )}
                 <Button variant="ghost" onClick={()=>setSelected(null)}>Close</Button>
@@ -193,26 +226,6 @@ export default function DriverOnboarding({ notify }) {
                 <p style={{color:'white'}}><b style={{color:'white'}}>CNIC:</b> {selected.basicInfo?.cnic || '-'}</p>
                 <p style={{color:'white'}}><b style={{color:'white'}}>City:</b> {selected.basicInfo?.city || '-'}</p>
                 <p style={{color:'white'}}><b style={{color:'white'}}>Email:</b> {selected.basicInfo?.email || '-'}</p>
-                <div style={{marginTop:12}}>
-                  <small style={{color:'white'}}>Basic Info Photo</small>
-                  {getPic(selected, 'basicInfo.photo', 'basicInfo.profilePhoto', 'basicInfo.driverPhoto', 'photo', 'profilePhoto', 'driverPhoto')?
-                    <img src={getPic(selected, 'basicInfo.photo', 'basicInfo.profilePhoto', 'basicInfo.driverPhoto', 'photo', 'profilePhoto', 'driverPhoto')} alt="Basic info profile" style={{display:'block', width:140, height:140, objectFit:'cover', borderRadius:8, marginTop:4, border:'1px solid #444'}} />
-                    : <div style={{background:'#333', width:140, height:100, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'white'}}>No Image</div>}
-                </div>
-                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:12}}>
-                  <div>
-                    <small style={{color:'white'}}>CNIC Front (Basic)</small>
-                    {getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'basicInfo.cnic_front', 'cnicFront', 'cnicFrontPic', 'documents.cnicFront')?
-                      <img src={getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'basicInfo.cnic_front', 'cnicFront', 'cnicFrontPic', 'documents.cnicFront')} style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, marginTop:4, border:'1px solid #444'}} />
-                      : <div style={{background:'#333', height:120, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'white'}}>No Image</div>}
-                  </div>
-                  <div>
-                    <small style={{color:'white'}}>CNIC Back (Basic)</small>
-                    {getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'basicInfo.cnic_back', 'cnicBack', 'cnicBackPic', 'documents.cnicBack')?
-                      <img src={getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'basicInfo.cnic_back', 'cnicBack', 'cnicBackPic', 'documents.cnicBack')} style={{width:'100%', height:120, objectFit:'cover', borderRadius:8, marginTop:4, border:'1px solid #444'}} />
-                      : <div style={{background:'#333', height:120, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'white'}}>No Image</div>}
-                  </div>
-                </div>
               </div>
               <div style={{background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>🏍️ Vehicle Info</h4>
@@ -221,16 +234,6 @@ export default function DriverOnboarding({ notify }) {
                 <p style={{color:'white'}}><b style={{color:'white'}}>Model:</b> {selected.vehicleInfo?.model || '-'}</p>
                 <p style={{color:'white'}}><b style={{color:'white'}}>Year:</b> {selected.vehicleInfo?.year || '-'}</p>
                 <p style={{color:'white'}}><b style={{color:'white'}}>Number Plate:</b> {selected.vehicleInfo?.numberPlate || selected.carNumber || '-'}</p>
-                <p style={{color:'white'}}><b style={{color:'white'}}>Color:</b> {selected.vehicleInfo?.color || '-'}</p>
-              </div>
-              <div style={{background:'#272727', padding:16, borderRadius:12, color:'white'}}>
-                <h4 style={{color:'white', marginBottom:10}}>🪪 Licence Info</h4>
-                <p style={{color:'white'}}><b style={{color:'white'}}>Licence No:</b> {selected.licenceInfo?.licenceNumber || selected.licenceNumber || '-'}</p>
-                <p style={{color:'white'}}><b style={{color:'white'}}>Expiry:</b> {selected.licenceInfo?.expiry || '-'}</p>
-              </div>
-              <div style={{background:'#272727', padding:16, borderRadius:12, color:'white'}}>
-                <h4 style={{color:'white', marginBottom:10}}>🤳 Selfie with Licence</h4>
-                {getPic(selected, 'selfie', 'selfieWithLicence', 'basicInfo.selfie', 'documents.selfie')? <img src={getPic(selected, 'selfie', 'selfieWithLicence', 'basicInfo.selfie', 'documents.selfie')} alt="selfie" style={{width:'100%', height:200, objectFit:'cover', borderRadius:8, border:'1px solid #333'}} /> : <p style={{color:'white'}}>No Selfie</p>}
               </div>
               <div style={{gridColumn:'span 2', background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>📸 All Uploaded Documents (Real Pics)</h4>
@@ -248,7 +251,7 @@ export default function DriverOnboarding({ notify }) {
             <div style={{display:'flex', gap:12, marginTop:20, justifyContent:'flex-end', alignItems:'center'}}>
               {selected.status === 'approved' ? (
                 <div style={{display:'flex', gap:10, alignItems:'center'}}>
-                  <div style={{background:'#22c55e', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold'}}>✅ Already Approved - No Action Needed</div>
+                  <div style={{background:'#22c55e', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold'}}>✅ Already Approved</div>
                   <button onClick={()=>setSelected(null)} style={{background:'#333', color:'white', padding:'12px 24px', borderRadius:8, border:'none', cursor:'pointer'}}>Close</button>
                 </div>
               ) : selected.status === 'rejected' ? (
@@ -259,8 +262,8 @@ export default function DriverOnboarding({ notify }) {
                 </>
               ) : (
                 <>
-                  <button onClick={()=>handleAction(selected, 'rejected')} disabled={loading} style={{background:'#ef4444', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>❌ Reject Driver</button>
-                  <button onClick={()=>handleAction(selected, 'approved')} disabled={loading} style={{background:'#22c55e', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>✅ Approve & Activate</button>
+                  <button onClick={()=>handleAction(selected, 'rejected')} disabled={loading} style={{background:'#ef4444', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>{loading ? 'Wait...' : '❌ Reject Driver'}</button>
+                  <button onClick={()=>handleAction(selected, 'approved')} disabled={loading} style={{background:'#22c55e', color:'white', padding:'12px 24px', borderRadius:8, fontWeight:'bold', border:'none', cursor:'pointer'}}>{loading ? 'Wait...' : '✅ Approve & Activate'}</button>
                 </>
               )}
             </div>

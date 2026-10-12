@@ -7,7 +7,7 @@ export default function RatingsReviewsMonitor(){
   const [ratings, setRatings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all'); // all, low, high
+  const [filter, setFilter] = useState('all');
   const [error, setError] = useState('');
 
   const loadRatings = async () => {

@@ -4,7 +4,7 @@ export default function SplashFrontScreen({ onContinue }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (onContinue) onContinue();
-    }, 2500); // 2.5 sec baad auto login pe jayega
+    }, 2500);
     return () => clearTimeout(timer);
   }, [onContinue]);
 

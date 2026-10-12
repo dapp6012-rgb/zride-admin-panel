@@ -15,19 +15,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-// REAL DATA FILTER - DUMMY HATAO
-function cleanRealList(list) {
-  const dummyKeywords = ['dummy', 'test', 'fake', 'demo', 'unknown', 'null', 'undefined', 'sample', 'all country', 'all city'];
-  return [...new Set(
-    (list || [])
-     .map(v => String(v || '').trim())
-     .filter(v => v.length > 1)
-     .filter(v =>!dummyKeywords.includes(v.toLowerCase()))
-     .filter(v =>!/^city\d+$/i.test(v))
-     .filter(v =>!/^country\d+$/i.test(v))
-  )].sort();
-}
-
 function getDriverCoordinates(driver) {
   const values = [
     driver,
@@ -38,7 +25,6 @@ function getDriverCoordinates(driver) {
     driver?.coordinates,
     driver?.coords,
   ];
-
   for (const value of values) {
     if (Array.isArray(value) && value.length >= 2) {
       const lng = Number(value[0]);
@@ -47,14 +33,12 @@ function getDriverCoordinates(driver) {
         return { lat, lng };
       }
     }
-
     if (value && typeof value === 'object') {
       const lat = Number(value.lat?? value.latitude?? value.y);
       const lng = Number(value.lng?? value.lon?? value.longitude?? value.x);
       if (Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
         return { lat, lng };
       }
-
       if (Array.isArray(value.coordinates) && value.coordinates.length >= 2) {
         const geoLng = Number(value.coordinates[0]);
         const geoLat = Number(value.coordinates[1]);
@@ -64,13 +48,11 @@ function getDriverCoordinates(driver) {
       }
     }
   }
-
   return null;
 }
 
 function RealMap({ drivers }) {
   const pakistanCenter = [30.3753, 69.3451];
-
   const greenDotIcon = L.divIcon({
     className: 'custom-green-dot',
     html: `
@@ -83,14 +65,10 @@ function RealMap({ drivers }) {
     iconSize: [20, 20],
     iconAnchor: [10, 10]
   });
-
   return (
     <div style={{ height: '650px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid #222' }}>
       <MapContainer center={pakistanCenter} zoom={5.5} style={{ height: '100%', width: '100%' }}>
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
-        />
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap contributors' />
         {drivers.map((d, i) => {
           const coordinates = getDriverCoordinates(d);
           if (!coordinates) return null;
@@ -128,6 +106,30 @@ export default function SuperAdminDashboard({ notify, setScreen }) {
       if (requestInFlight) return;
       requestInFlight = true;
       try {
+        // 1. Real countries aur zones alag se fetch karo - yehi 100% real honge
+        const [zonesRes, countriesRes] = await Promise.all([
+          fetch(`${API_URL}/zones`).then(r=>r.ok?r.json():[]).catch(()=>[]),
+          fetch(`${API_URL}/countries`).then(r=>r.ok?r.json():[]).catch(()=>fetch(`${API_URL}/api/countries`).then(r=>r.ok?r.json():[]).catch(()=>[]))
+        ]);
+
+        const zonesList = Array.isArray(zonesRes)? zonesRes : zonesRes?.zones || [];
+        const countriesList = Array.isArray(countriesRes)? countriesRes : countriesRes?.countries || [];
+
+        const realCities = [...new Set(zonesList.filter(z=>z.isActive!==false && z.name).map(z=>z.name.trim()))].sort();
+        const realCountries = [...new Set(countriesList.filter(c=>c.name).map(c=>c.name.trim()))].sort();
+
+        // Agar countries empty hain to zones se country name nikalo
+        let finalCountries = realCountries;
+        if (finalCountries.length === 0) {
+          finalCountries = [...new Set(zonesList.filter(z=>z.country).map(z=>z.country.trim()))].sort();
+        }
+
+        if (active) {
+          setCities(realCities);
+          setCountries(finalCountries);
+        }
+
+        // 2. Stats fetch karo
         const params = new URLSearchParams();
         if (selectedCity) params.set('city', selectedCity);
         if (selectedCountry) params.set('country', selectedCountry);
@@ -138,14 +140,16 @@ export default function SuperAdminDashboard({ notify, setScreen }) {
         if (!data.success) throw new Error(data.message || 'Dashboard data unavailable');
         if (active) {
           setStats(data.stats);
-          // SIRF REAL CITY/COUNTRY SHOW HOGA - DUMMY FILTER
-          setCities(cleanRealList(data.cities));
-          setCountries(cleanRealList(data.countries));
-          setLiveDrivers(Array.isArray(data.liveDrivers)? data.liveDrivers.filter(d => {
-            const city = String(d.city || '').toLowerCase();
-            const country = String(d.country || '').toLowerCase();
-            return!['dummy','test','fake','demo'].includes(city) &&!['dummy','test','fake','demo'].includes(country);
-          }) : []);
+          // Live drivers ko real cities/countries se filter karo - dummy auto hat jayega
+          const filteredDrivers = Array.isArray(data.liveDrivers)? data.liveDrivers.filter(d => {
+            const c = (d.country || '').trim();
+            const ci = (d.city || '').trim();
+            // Agar aapne countries add kiye hain to sirf wohi allow karo
+            if (finalCountries.length > 0 && c &&!finalCountries.includes(c)) return false;
+            if (realCities.length > 0 && ci &&!realCities.includes(ci)) return false;
+            return true;
+          }) : [];
+          setLiveDrivers(filteredDrivers);
           setError('');
         }
       } catch (err) {
@@ -195,21 +199,25 @@ export default function SuperAdminDashboard({ notify, setScreen }) {
 
   return (
     <div className="text-white">
-    <ScreenFrame eyebrow="Super admin / network pulse" title="Pakistan Live Network" description={`Live tracking - ${liveDrivers.length} drivers online${selectedCity? ` in ${selectedCity}` : ' across all cities'}`}
+    <ScreenFrame eyebrow="Super admin / network pulse" title="Pakistan Live Network" description={`Live tracking - ${liveDrivers.length} drivers online${selectedCity? ` in ${selectedCity}` : ''}${countries.length? ` | ${countries.length} Countries, ${cities.length} Cities added` : ''}`}
       actions={<div className="flex flex-wrap items-center gap-2">
         <select aria-label="Filter by country" value={selectedCountry} onChange={event => setSelectedCountry(event.target.value)} className="rounded-md border border-white/20 bg-black px-3 py-2 text-sm text-white">
-          <option value="">All countries</option>
+          <option value="">All countries ({countries.length})</option>
           {countries.map(country => <option key={country} value={country}>{country}</option>)}
         </select>
         <select aria-label="Filter by city" value={selectedCity} onChange={event => setSelectedCity(event.target.value)} className="rounded-md border border-white/20 bg-black px-3 py-2 text-sm text-white">
-          <option value="">All cities</option>
+          <option value="">All cities ({cities.length})</option>
           {cities.map(city => <option key={city} value={city}>{city}</option>)}
         </select>
-        {/* EXPORT CSV BUTTON HATA DIYA HAI - SIRF EXCEL RAHEGA */}
         <ExcelExportButton onClick={handleExportExcel} disabled={!stats} />
       </div>}
     >
       {error && <div role="status" className="mb-3 rounded-md border border-red-400/30 bg-red-950/30 px-3 py-2 text-sm text-red-200">{error}</div>}
+      {countries.length === 0 && cities.length === 0 && (
+        <div className="mb-3 rounded-md border border-yellow-400/30 bg-yellow-950/30 px-3 py-2 text-sm text-yellow-200">
+          Koi Country/City add nahi hai. Pehle Zone Management se add karo, phir yahan show hoga.
+        </div>
+      )}
       <div className="grid stats">
         <StatCard icon={<Car size={18} />} label="Total Rides Today" value={stats? Number(stats.totalRides || 0).toLocaleString() : '—'} note={<span className="flex items-center gap-1 text-white"><TrendingUp size={12}/> Live</span>} />
         <StatCard icon={<DollarSign size={18} />} label="Gross Earnings" value={stats? `₨ ${Number(stats.gross || 0).toLocaleString()}` : '—'} note="Today collected" />
