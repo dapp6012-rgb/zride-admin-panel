@@ -28,7 +28,7 @@ export default function UsersHistory() {
     };
 
     fetchRiders();
-    const interval = setInterval(fetchRiders, 15000); // 15 sec - professional
+    const interval = setInterval(fetchRiders, 15000);
     return () => {
       active = false;
       clearInterval(interval);
@@ -55,15 +55,15 @@ export default function UsersHistory() {
       TotalRides: rider.totalRides || 0,
       RecentRides: (rider.rides || []).slice(0, 5).map(ride => `${ride.pickup || '-'} to ${ride.destination || ride.drop || '-'} (Rs ${ride.finalFare || ride.fare || '-'})`).join('; '),
     }));
-    exportExcel(formatted, `PassengerHistory_${new Date().toISOString().split('T')[0]}`);
+    exportExcel(formatted, `UsersHistory_${new Date().toISOString().split('T')[0]}`);
   };
 
   return (
     <div className="p-6 bg-black min-h-screen text-white space-y-5">
       <div className="flex flex-wrap justify-between gap-3 items-center">
         <div>
-          <h1 className="text-xl font-bold">Passenger History</h1>
-          <p className="text-xs text-white/50 mt-1">{filteredRiders.length} riders • Auto-refresh 15s</p>
+          <h1 className="text-xl font-bold">Users History</h1>
+          <p className="text-xs text-white/50 mt-1">{filteredRiders.length} users • Auto-refresh 15s</p>
         </div>
         <ExcelExportButton onClick={handleExportExcel} />
       </div>
@@ -81,7 +81,7 @@ export default function UsersHistory() {
         </div>
       </div>
 
-      {loading && <div className="flex items-center gap-3 justify-center py-20"><div className="w-5 h-5 border-2 border-white/10 border-t-[#A7E92F] rounded-full animate-spin" /> <span className="text-white/50 text-sm">Loading riders...</span></div>}
+      {loading && <div className="flex items-center gap-3 justify-center py-20"><div className="w-5 h-5 border-2 border-white/10 border-t-[#A7E92F] rounded-full animate-spin" /> <span className="text-white/50 text-sm">Loading users...</span></div>}
       {!loading && error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm text-center">{error} <button onClick={()=>window.location.reload()} className="ml-2 underline font-bold">Retry</button></div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -118,7 +118,7 @@ export default function UsersHistory() {
 
       {filteredRiders.length === 0 && !loading && !error && (
         <div className="text-center mt-10 bg-[#1a1a1a] border border-dashed border-white/10 rounded-2xl p-12">
-          <p className="text-white/30">No rider found {search && `for "${search}"`}</p>
+          <p className="text-white/30">No user found {search && `for "${search}"`}</p>
           {search && <button onClick={()=>setSearch('')} className="mt-3 text-sm text-[#A7E92F] underline">Clear search</button>}
         </div>
       )}

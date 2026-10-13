@@ -41,6 +41,7 @@ export default function CityDashboard({ notify }) {
       const res = await fetch(`${API_URL}/analytics?city=${encodeURIComponent(city)}`);
       if (!res.ok) throw new Error(`Analytics failed (${res.status})`);
       const data = await res.json();
+      // REAL DATA from MongoDB
       setStats({...data, cityName: city });
     } catch (err) {
       console.error('City dashboard failed:', err);
@@ -59,6 +60,7 @@ export default function CityDashboard({ notify }) {
     return () => clearInterval(interval);
   }, [selectedCity, fetchCityStats]);
 
+  // REAL VALUES - No dummy 10
   const ridesToday = stats?.totalTrips?? 0;
   const onlineDrivers = stats?.activeDrivers?? 0;
   const cityEarnings = stats?.totalRevenue?? 0;

@@ -45,7 +45,7 @@ export default function AdminShopRequestsScreen({ notify }) {
 
       // AI CHECK ADD KARO HAR SHOP PAR
       const withAi = list.map(shop => ({
-       ...shop,
+      ...shop,
         aiChecks: shop.aiChecks || runShopAiCheck(shop)
       }));
 
@@ -157,7 +157,8 @@ export default function AdminShopRequestsScreen({ notify }) {
         <ExcelExportButton onClick={handleExportExcel} />
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      {/* FIXED: Sirf 2 card rakhe hain - AI wale 2 hata diye */}
+      <div className="grid grid-cols-2 gap-4">
         <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/10">
           <p className="text-2xl font-bold text-white">{shops.length}</p>
           <p className="text-xs text-white/60">Total</p>
@@ -165,14 +166,6 @@ export default function AdminShopRequestsScreen({ notify }) {
         <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/10">
           <p className="text-2xl font-bold text-yellow-400">{shops.filter(s=>s.status==='pending').length}</p>
           <p className="text-xs text-white/60">Pending</p>
-        </div>
-        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/10">
-          <p className="text-2xl font-bold text-green-400">{shops.filter(s=>s.aiChecks?.status==='AI_APPROVED').length}</p>
-          <p className="text-xs text-white/60">AI Approved</p>
-        </div>
-        <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/10">
-          <p className="text-2xl font-bold text-red-400">{shops.filter(s=>s.aiChecks?.status==='AI_REJECTED').length}</p>
-          <p className="text-xs text-white/60">AI Rejected</p>
         </div>
       </div>
 

@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const apiTarget = (env.VITE_API_URL || 'http://10.32.37.200:3000').replace(/\/api\/?$/, '');
+  const apiTarget = (env.VITE_API_URL || 'https://zride-texon.loca.lt').replace(/\/api\/?$/, '');
 
   return {
     base: './',
