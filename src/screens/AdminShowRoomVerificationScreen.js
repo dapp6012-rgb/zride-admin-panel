@@ -29,7 +29,7 @@ function runShopAiCheck(shop) {
   return { status: 'AI_APPROVED', reason: 'CNIC OK, Images OK', score: '90%' };
 }
 
-export default function AdminShopRequestsScreen({ notify }) {
+export default function AdminShowRoomVerificationScreen({ notify }) {
   const [shops, setShops] = useState([]);
   const [filter, setFilter] = useState('pending');
   const [loading, setLoading] = useState(true);

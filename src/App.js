@@ -1,8 +1,35 @@
-import { useState, lazy, Suspense, useCallback, useEffect, memo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Shell, Toast } from './components/ControlRoom';
 import './index.css';
 import React from 'react';
 import NoInternetBanner from './components/NoInternetBanner';
+
+// ===== DIRECT IMPORTS - NO LAZY = INSTANT OPEN =====
+import AdminLoginScreen from './screens/AdminLoginScreen';
+import AnalyticsReports from './screens/AnalyticsReports';
+import CityDashboard from './screens/CityDashboard';
+import DriverOnboarding from './screens/DriverOnboarding';
+import DriverPerformance from './screens/DriverPerformance';
+import VehicleTypes from './screens/VehicleTypes';
+import Commission from './screens/Commission';
+import ComplaintsSupportRider from './screens/ComplaintsSupportRider';
+import ComplaintsSupportDriver from './screens/ComplaintsSupportDriver';
+import CallLogs from './screens/CallLogs';
+import UsersHistory from './screens/UsersHistory';
+import Notifications from './screens/Notifications';
+import PromoCodes from './screens/PromoCodes';
+import RatingsReviewsMonitor from './screens/RatingsReviewsMonitor';
+import RoleSelectScreen from './screens/RoleSelectScreen';
+import SOSCenter from './screens/SOSCenter';
+import SplashFrontScreen from './screens/SplashFrontScreen';
+import SuperAdminDashboard from './screens/SuperAdminDashboard';
+import UsersManagement from './screens/UsersManagement';
+import ZoneManagement from './screens/ZoneManagement';
+import AdminShowRoomVerificationScreen from './screens/AdminShowRoomVerificationScreen';
+import AdminShopVerification from './screens/AdminShowRoomVerificationScreen'; // SAME FILE, 2 NAMES
+import AdminAddBanner from './screens/AdminAddBanner';
+import AdminAddCityScreen from './screens/AdminAddCityScreen';
+import TruckVerificationScreen from './screens/TruckVerificationScreen';
 
 const SECURE_ADMIN = {
   email: "dapp6012@gmail.com",
@@ -27,30 +54,6 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-const AdminLoginScreen = lazy(() => import('./screens/AdminLoginScreen'));
-const AnalyticsReports = lazy(() => import('./screens/AnalyticsReports'));
-const CityDashboard = lazy(() => import('./screens/CityDashboard'));
-const DriverOnboarding = lazy(() => import('./screens/DriverOnboarding'));
-const DriverPerformance = lazy(() => import('./screens/DriverPerformance'));
-const VehicleTypes = lazy(() => import('./screens/VehicleTypes'));
-const Commission = lazy(() => import('./screens/Commission'));
-const ComplaintsSupportRider = lazy(() => import('./screens/ComplaintsSupportRider'));
-const ComplaintsSupportDriver = lazy(() => import('./screens/ComplaintsSupportDriver'));
-const CallLogs = lazy(() => import('./screens/CallLogs'));
-const UsersHistory = lazy(() => import('./screens/UsersHistory'));
-const Notifications = lazy(() => import('./screens/Notifications'));
-const PromoCodes = lazy(() => import('./screens/PromoCodes'));
-const RatingsReviewsMonitor = lazy(() => import('./screens/RatingsReviewsMonitor'));
-const RoleSelectScreen = lazy(() => import('./screens/RoleSelectScreen'));
-const SOSCenter = lazy(() => import('./screens/SOSCenter'));
-const SplashFrontScreen = lazy(() => import('./screens/SplashFrontScreen'));
-const SuperAdminDashboard = lazy(() => import('./screens/SuperAdminDashboard'));
-const UsersManagement = lazy(() => import('./screens/UsersManagement'));
-const ZoneManagement = lazy(() => import('./screens/ZoneManagement'));
-const AdminShopRequestsScreen = lazy(() => import('./screens/AdminShopRequestsScreen'));
-const AdminAddBanner = lazy(() => import('./screens/AdminAddBanner'));
-const AdminAddCityScreen = lazy(() => import('./screens/AdminAddCityScreen'));
-
 const SCREENS_MAP = {
   'dashboard': SuperAdminDashboard, 'super-admin': SuperAdminDashboard,
   'city-dashboard': CityDashboard, 'city-onboarding': DriverOnboarding,
@@ -72,17 +75,24 @@ const SCREENS_MAP = {
   'sos-center': SOSCenter, 'analytics': AnalyticsReports,
   'analytics-report': AnalyticsReports, 'notifications': Notifications,
   'bulk': PromoCodes, 'promo-code': PromoCodes,
-  'shop-requests': AdminShopRequestsScreen, 'banners': AdminAddBanner,
-  'banner-manager': AdminAddBanner,
-};
 
-const LoadingFallback = memo(() => (
-  <div className="w-full h-[80vh] flex flex-col items-center justify-center gap-3 bg-white">
-    <div className="w-8 h-8 border-2 border-black/10 border-t-[#A7E92F] rounded-full animate-spin" />
-    <p className="text-black/60 text-sm tracking-widest">ZRide Loading...</p>
-  </div>
-));
-LoadingFallback.displayName = 'LoadingFallback';
+  // ===== SHOWROOM VERIFICATION SCREEN =====
+  'shop-requests': AdminShowRoomVerificationScreen,
+  'showroom-verification': AdminShowRoomVerificationScreen,
+  'show-room-verification': AdminShowRoomVerificationScreen,
+  'admin-showroom-verification': AdminShowRoomVerificationScreen,
+  'admin-shop-verification': AdminShopVerification,
+  'shop-verification': AdminShopVerification,
+  'admin-shop-verification-screen': AdminShopVerification,
+  'shop-verification-screen': AdminShopVerification,
+
+  'banners': AdminAddBanner,
+  'banner-manager': AdminAddBanner,
+  'truck-verification': TruckVerificationScreen,
+  'truck-verifications': TruckVerificationScreen,
+  'truck-driver-verification': TruckVerificationScreen,
+  'driver-verification': TruckVerificationScreen,
+};
 
 export default function App() {
   const [stage, setStage] = useState(() => sessionStorage.getItem('ZRide_stage') || 'splash');
@@ -141,10 +151,9 @@ export default function App() {
   const ActiveScreen = SCREENS_MAP[screen] || SuperAdminDashboard;
 
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <>
       <NoInternetBanner />
 
-      {/* SPLASH KE BAAD SEEDHA LOGIN */}
       {stage === 'splash' && <SplashFrontScreen onContinue={() => {
         setRole('Super Admin');
         setStage('login');
@@ -156,14 +165,12 @@ export default function App() {
         <div className="app min-h-screen bg-[#F8FAFC] text-black">
           <Shell role={role} screen={screen} setScreen={setScreen} onLogout={handleLogout}>
             <ErrorBoundary screenName={screen}>
-              <Suspense fallback={<LoadingFallback />}>
-                <ActiveScreen notify={notify} setScreen={setScreen} />
-              </Suspense>
+              <ActiveScreen notify={notify} setScreen={setScreen} />
             </ErrorBoundary>
           </Shell>
           <Toast message={toast} />
         </div>
       )}
-    </Suspense>
+    </>
   );
 }

@@ -1,70 +1,9 @@
 import { useState } from 'react';
 import {
   AlertTriangle, BarChart3, Bell, Building2, Car, ChevronDown, CircleHelp,
-  LayoutDashboard, History, Image as ImageIcon, MapPin, Menu, MessageSquare, Search,
-  Settings, Shield, Star, Users, X, Zap, Store, Phone
+  LayoutDashboard, History, Image as ImageIcon, MapPin, Menu, Search,
+  Star, Users, X, Store, Phone, Truck
 } from 'lucide-react';
-
-export function Button({ children, title, variant = 'primary', style, disabled, onClick }) {
-  return (
-    <button className={`btn ${variant}`} style={style} disabled={disabled} onClick={onClick}>
-      {children || title}
-    </button>
-  );
-}
-
-export function Badge({ children, tone = 'neutral' }) {
-  return <span className={`badge ${tone}`}>{children}</span>;
-}
-
-export function ScreenFrame({ eyebrow, title, description, actions, children }) {
-  return (
-    <section className="screen-frame">
-      <div className="screen-heading">
-        <div>
-          {eyebrow && <div className="eyebrow">{eyebrow}</div>}
-          <h1>{title}</h1>
-          {description && <p>{description}</p>}
-        </div>
-        {actions && <div className="screen-actions">{actions}</div>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-export function SectionCard({ title, meta, children }) {
-  return (
-    <section className="section-card">
-      <div className="section-card-header"><h2>{title}</h2>{meta && <span>{meta}</span>}</div>
-      {children}
-    </section>
-  );
-}
-
-export function StatCard({ label, value, note }) {
-  return <div className="stat"><div className="stat-label">{label}</div><div className="stat-value">{value}</div><small>{note}</small></div>;
-}
-
-export function DataScreen({ title, description, rows = [], columns = [], renderRow }) {
-  return (
-    <SectionCard title={title} meta={description}>
-      <div className="table-wrap"><table><thead><tr>{columns.map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{rows.map(renderRow)}</tbody></table></div>
-    </SectionCard>
-  );
-}
-
-export function MiniMap({ label = 'LIVE MAP', pins = 0 }) {
-  return <div className="mini-map"><strong>{label}</strong><span>{pins} active points</span></div>;
-}
-
-export function SparkBars({ values = [] }) {
-  return <div className="spark-bars">{values.map((value, index) => <i key={`${value}-${index}`} style={{ height: `${value}%` }} />)}</div>;
-}
-
-export function Toast({ message }) {
-  return message ? <div className="toast" role="status">{message}</div> : null;
-}
 
 export function Shell({ screen, setScreen, role, onLogout, children }) {
   const [open, setOpen] = useState(false);
@@ -75,8 +14,17 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
       items: [
         { key: 'dashboard', label: 'Super Admin Dashboard', icon: LayoutDashboard },
         { key: 'shop-requests', label: 'Shop Requests', icon: Store },
+        { key: 'showroom-requests', label: 'ShowRoom Request', icon: Store },
         { key: 'banners', label: 'Banner Manager', icon: ImageIcon },
+        { key: 'truck-verification', label: 'Truck Verification', icon: Truck },
       ] 
+    },
+    { 
+      label: 'Truck Operations', 
+      items: [
+        { key: 'truck-verification', label: 'Driver Verification', icon: Truck },
+        { key: 'truck-verifications', label: 'All Truck Requests', icon: Truck },
+      ]
     },
     { 
       label: 'City Operations', 
@@ -126,7 +74,7 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
               <div className="nav-label">{group.label}</div>
               {group.items.map(({ key, label, icon: Icon }) => (
                 <button 
-                  key={key} 
+                  key={`${group.label}-${key}`} 
                   className={`nav-item ${screen === key ? 'active' : ''}`} 
                   onClick={() => { setScreen(key); setOpen(false); }}
                 >
@@ -141,7 +89,6 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
           <button className="btn ghost" style={{ width: '100%', marginTop: 10 }} onClick={onLogout}>Switch role</button>
         </div>
       </aside>
-      
       <div className="main" style={{ flex: 1, height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
         <header className="topbar" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
           <div className="top-actions">
@@ -150,16 +97,12 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
           </div>
           <div className="top-actions">
             <button className="icon-btn"><Search size={15} /></button>
-            <button className="icon-btn" onClick={() => setScreen('notifications')} title="Open Notifications">
-              <Bell size={15} />
-            </button>
+            <button className="icon-btn" onClick={() => setScreen('notifications')}><Bell size={15} /></button>
             <div className="avatar">AK</div>
             <ChevronDown size={14} color="hsl(215 16% 63%)" />
           </div>
         </header>
-        <div style={{ paddingBottom: 40 }}>
-          {children}
-        </div>
+        <div style={{ paddingBottom: 40 }}>{children}</div>
       </div>
     </div>
   );
