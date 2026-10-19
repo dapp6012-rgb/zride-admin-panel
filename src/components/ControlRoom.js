@@ -17,46 +17,18 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
         { key: 'showroom-requests', label: 'ShowRoom Request', icon: Store },
         { key: 'banners', label: 'Banner Manager', icon: ImageIcon },
         { key: 'truck-verification', label: 'Truck Verification', icon: Truck },
-      ] 
-    },
-    { 
-      label: 'Truck Operations', 
-      items: [
-        { key: 'truck-verification', label: 'Driver Verification', icon: Truck },
-        { key: 'truck-verifications', label: 'All Truck Requests', icon: Truck },
-      ]
-    },
-    {
-      label: 'History Logs',
-      items: [
         { key: 'shop-history', label: 'Shop History', icon: Store },
         { key: 'driver-history', label: 'Driver History', icon: Users },
         { key: 'showroom-owner-history', label: 'ShowRoom History', icon: Building2 },
         { key: 'truck-history', label: 'Truck History', icon: Truck },
-      ]
-    },
-    { 
-      label: 'City Operations', 
-      items: [
         { key: 'city-dashboard', label: 'City Dashboard', icon: Building2 },
         { key: 'add-city', label: 'Add Country and City', icon: MapPin },
-        { key: 'city-onboarding', label: 'Driver Onboarding', icon: Shield },
+        { key: 'city-deiver-onboarding', label: 'Driver Onboarding', icon: Shield },
         { key: 'city-performance', label: 'Driver Performance', icon: Users },
         { key: 'city-vehicles', label: 'Vehicle Type', icon: Car },
         { key: 'zones', label: 'Zone Management', icon: MapPin },
         { key: 'commission', label: 'Commission', icon: BarChart3 },
-      ] 
-    },
-    { 
-      label: 'Drivers & Users', 
-      items: [
-        { key: 'users', label: 'User Management', icon: Users },
         { key: 'passenger-history', label: 'Users History', icon: History },
-      ] 
-    },
-    { 
-      label: 'Support & Monitoring', 
-      items: [
         { key: 'complaints', label: 'Complaint Support Rider', icon: CircleHelp },
         { key: 'complaints-driver', label: 'Complaint Support Driver', icon: CircleHelp },
         { key: 'call-logs', label: 'Call Logs', icon: Phone },
