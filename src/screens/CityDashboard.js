@@ -3,12 +3,16 @@ import { Button, MiniMap, ScreenFrame, SectionCard, StatCard, Badge } from '../c
 import { API_URL } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
+import GlobalImageViewer from '../components/GlobalImageViewer';
 
 export default function CityDashboard({ notify }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cities, setCities] = useState([]);
   const [selectedCity, setSelectedCity] = useState('');
+  const [viewer, setViewer] = useState({ isOpen: false, images: [], index: 0 });
+
+  const openViewer = (images, index) => setViewer({ isOpen: true, images, index });
 
   const fetchCities = useCallback(async () => {
     try {
@@ -160,6 +164,7 @@ export default function CityDashboard({ notify }) {
           </>
         )}
       </ScreenFrame>
+      <GlobalImageViewer images={viewer.images} initialIndex={viewer.index} isOpen={viewer.isOpen} onClose={() => setViewer(current => ({ ...current, isOpen: false }))} />
     </div>
   );
 }

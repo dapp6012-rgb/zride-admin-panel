@@ -6,6 +6,7 @@ import {
 import { API_URL } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
+import GlobalImageViewer from '../components/GlobalImageViewer';
 
 const CHART_COLORS = ['#A7E92F', '#2878B5', '#D99424', '#C74D4D', '#7665A8'];
 const money = (value) => `Rs. ${Number(value || 0).toLocaleString()}`;
@@ -16,6 +17,9 @@ export default function AnalyticsReport() {
   const [selectedCity, setSelectedCity] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [viewer, setViewer] = useState({ isOpen: false, images: [], index: 0 });
+
+  const openViewer = (images, index) => setViewer({ isOpen: true, images, index });
 
   // City list - only once
   useEffect(() => {
@@ -136,6 +140,7 @@ export default function AnalyticsReport() {
           </table>
         </div>
       </section>
+      <GlobalImageViewer images={viewer.images} initialIndex={viewer.index} isOpen={viewer.isOpen} onClose={() => setViewer(current => ({ ...current, isOpen: false }))} />
     </main>
   );
 }

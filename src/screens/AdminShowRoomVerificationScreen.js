@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL, API_URL } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
+import GlobalImageViewer from '../components/GlobalImageViewer';
 
 const SHOP_API_URL = `${API_URL}/shops`;
 
@@ -35,6 +36,9 @@ export default function AdminShowRoomVerificationScreen({ notify }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionId, setActionId] = useState(null);
+  const [viewer, setViewer] = useState({ isOpen: false, images: [], index: 0 });
+
+  const openViewer = (images, index) => setViewer({ isOpen: true, images, index });
 
   const fetchShops = useCallback(async () => {
     try {
@@ -207,13 +211,15 @@ export default function AdminShowRoomVerificationScreen({ notify }) {
 
                   {shop.shopImages?.length > 0 && (
                     <div className="flex flex-wrap gap-2 pt-3">
-                      {shop.shopImages.map((image, index) => {
-                        const url = getShopImageUrl(image);
-                        if(!url) return null;
+                      {shop.shopImages.map(getShopImageUrl).filter(Boolean).map((url, index) => {
                         return (
-                          <a key={`${shop._id}-${index}`} href={url} target="_blank" rel="noreferrer">
-                            <img src={url} alt={`${shop.shopName} ${index + 1}`} className="h-20 w-20 rounded-lg border border-white/10 object-cover hover:scale-105 transition-transform" />
-                          </a>
+                          <img
+                            key={`${shop._id}-${index}`}
+                            src={url}
+                            alt={`${shop.shopName} ${index + 1}`}
+                            className="h-20 w-20 cursor-pointer rounded-lg border border-white/10 object-cover transition-transform hover:scale-105 hover:opacity-80"
+                            onClick={() => openViewer(shop.shopImages.map(getShopImageUrl).filter(Boolean), index)}
+                          />
                         );
                       })}
                     </div>
@@ -266,6 +272,7 @@ export default function AdminShowRoomVerificationScreen({ notify }) {
           </div>
         )}
       </div>
+      <GlobalImageViewer images={viewer.images} initialIndex={viewer.index} isOpen={viewer.isOpen} onClose={() => setViewer(current => ({ ...current, isOpen: false }))} />
     </div>
   );
 }

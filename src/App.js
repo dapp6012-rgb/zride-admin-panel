@@ -3,8 +3,6 @@ import { Shell, Toast } from './components/ControlRoom';
 import './index.css';
 import React from 'react';
 import NoInternetBanner from './components/NoInternetBanner';
-
-// ===== DIRECT IMPORTS - NO LAZY = INSTANT OPEN =====
 import AdminLoginScreen from './screens/AdminLoginScreen';
 import AnalyticsReports from './screens/AnalyticsReports';
 import CityDashboard from './screens/CityDashboard';
@@ -26,10 +24,16 @@ import SuperAdminDashboard from './screens/SuperAdminDashboard';
 import UsersManagement from './screens/UsersManagement';
 import ZoneManagement from './screens/ZoneManagement';
 import AdminShowRoomVerificationScreen from './screens/AdminShowRoomVerificationScreen';
-import AdminShopVerification from './screens/AdminShowRoomVerificationScreen'; // SAME FILE, 2 NAMES
+import AdminShopVerification from './screens/AdminShopVerification';
 import AdminAddBanner from './screens/AdminAddBanner';
 import AdminAddCityScreen from './screens/AdminAddCityScreen';
-import TruckVerificationScreen from './screens/TruckVerificationScreen';
+import TruckRequestScreen from './screens/TruckRequestScreen';
+
+// ===== 4 HISTORY SCREENS ADDED =====
+import ShopLoginHistoryScreen from './screens/ShopLoginHistoryScreen';
+import TruckDriverHistoryScreen from './screens/TruckDriverHistoryScreen';
+import ShowRoomOwnerHistory from './screens/ShowRoomOwnerHistory';
+import DriverHistoryScreen from './screens/DriverHistoryScreen';
 
 const SECURE_ADMIN = {
   email: "dapp6012@gmail.com",
@@ -76,8 +80,8 @@ const SCREENS_MAP = {
   'analytics-report': AnalyticsReports, 'notifications': Notifications,
   'bulk': PromoCodes, 'promo-code': PromoCodes,
 
-  // ===== SHOWROOM VERIFICATION SCREEN =====
-  'shop-requests': AdminShowRoomVerificationScreen,
+  // ===== SHOWROOM / SHOP VERIFICATION =====
+  'shop-requests': AdminShopVerification,
   'showroom-verification': AdminShowRoomVerificationScreen,
   'show-room-verification': AdminShowRoomVerificationScreen,
   'admin-showroom-verification': AdminShowRoomVerificationScreen,
@@ -88,10 +92,31 @@ const SCREENS_MAP = {
 
   'banners': AdminAddBanner,
   'banner-manager': AdminAddBanner,
-  'truck-verification': TruckVerificationScreen,
-  'truck-verifications': TruckVerificationScreen,
-  'truck-driver-verification': TruckVerificationScreen,
-  'driver-verification': TruckVerificationScreen,
+  'truck-verification': TruckRequestScreen,
+  'truck-verifications': TruckRequestScreen,
+  'truck-driver-verification': TruckRequestScreen,
+  'driver-verification': TruckRequestScreen,
+
+  // ===== 4 HISTORY SCREENS =====
+  'shop-history': ShopLoginHistoryScreen,
+  'shop-login-history': ShopLoginHistoryScreen,
+  'shop-mode-history': ShopLoginHistoryScreen,
+
+  'truck-history': TruckDriverHistoryScreen,
+  'truck-login-history': TruckDriverHistoryScreen,
+  'truck-driver-history': TruckDriverHistoryScreen,
+  'truck-mode-history': TruckDriverHistoryScreen,
+
+  'showroom-history': ShowRoomOwnerHistory,
+  'showroom-owner-history': ShowRoomOwnerHistory,
+  'showroom-login-history': ShowRoomOwnerHistory,
+  'show-room-history': ShowRoomOwnerHistory,
+
+  'driver-history': DriverHistoryScreen,
+  'ride-driver-history': DriverHistoryScreen,
+  'drivers-history': DriverHistoryScreen,
+  'driver-login-history': DriverHistoryScreen,
+  'ride-drivers-history': DriverHistoryScreen,
 };
 
 export default function App() {

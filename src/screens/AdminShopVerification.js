@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { API_URL } from "../config";
+import { API_BASE_URL, API_URL } from "../lib/api";
+import GlobalImageViewer from "../components/GlobalImageViewer";
+
+const getShopImageUrl = (image) => {
+  if (!image || typeof image !== "string") return "";
+  if (/^https?:\/\//i.test(image)) return image;
+  return `${API_BASE_URL}${image.startsWith("/") ? "" : "/"}${image}`;
+};
 
 export default function AdminShopVerification() {
   const [requests, setRequests] = useState([]);
@@ -11,28 +18,15 @@ export default function AdminShopVerification() {
   const [actionLoading, setActionLoading] = useState("");
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [viewer, setViewer] = useState({ isOpen: false, images: [], index: 0 });
 
-  const getToken = () => {
-    return (
-      localStorage.getItem("adminToken") ||
-      localStorage.getItem("zride_admin_token") ||
-      localStorage.getItem("token") ||
-      ""
-    );
-  };
+  const openViewer = (images, index) => setViewer({ isOpen: true, images, index });
 
   const fetchRequests = async () => {
     setLoading(true);
     setError("");
     try {
-      const token = getToken();
-      if (!token) {
-        setError("Admin Token nahi mila - Please login as Admin");
-        setLoading(false);
-        return;
-      }
-
-      const res = await axios.get(`${API_URL}/admin/shop-requests?status=${filter}`, {
+      const res = await axios.get(`${API_URL}/shops`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "bypass-tunnel-reminder": "true",
@@ -43,9 +37,8 @@ export default function AdminShopVerification() {
 
       let data = [];
       if (Array.isArray(res.data)) data = res.data;
-      else if (Array.isArray(res.data.requests)) data = res.data.requests;
+      else if (Array.isArray(res.data.shops)) data = res.data.shops;
       else if (Array.isArray(res.data.data)) data = res.data.data;
-      else if (res.data.requests) data = [res.data.requests];
 
       setRequests(data);
     } catch (e) {
@@ -73,13 +66,9 @@ export default function AdminShopVerification() {
     setActionLoading(id + action);
     setSuccessMsg("");
     try {
-      const token = getToken();
-      const res = await axios.post(
-        `${API_URL}/admin/shop-requests/${id}/${action}`,
-        {
-          notifyUser: true,
-          timestamp: new Date().toISOString(),
-        },
+      const res = await axios.put(
+        `${API_URL}/shops/${encodeURIComponent(id)}/status`,
+        { status: action === "approve" ? "approved" : "rejected" },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -102,10 +91,11 @@ export default function AdminShopVerification() {
 
   const filtered = requests.filter(
     (r) =>
-      r.name?.toLowerCase().includes(search.toLowerCase()) ||
+      r.shopName?.toLowerCase().includes(search.toLowerCase()) ||
+      r.ownerName?.toLowerCase().includes(search.toLowerCase()) ||
       r.phone?.includes(search) ||
       r.cnic?.includes(search)
-  );
+  ).filter(r => filter === "all" || r.status === filter);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -193,7 +183,8 @@ export default function AdminShopVerification() {
               filtered.map((item) => (
                 <tr key={item._id} className="border-t hover:bg-gray-50">
                   <td className="p-4">
-                    <div className="font-bold">{item.name}</div>
+                    <div className="font-bold">{item.shopName}</div>
+                    <div className="text-xs text-gray-500">{item.ownerName}</div>
                     <div className="text-xs text-gray-500">
                       {new Date(item.createdAt).toLocaleString()}
                     </div>
@@ -212,13 +203,13 @@ export default function AdminShopVerification() {
                   </td>
                   <td className="p-4">
                     <div className="flex gap-2">
-                      {item.shopImages?.map((img, i) => (
+                      {item.shopImages?.map(getShopImageUrl).filter(Boolean).map((url, i) => (
                         <img
                           key={i}
-                          src={img}
+                          src={url}
                           alt="shop"
-                          className="w-12 h-12 rounded-lg object-cover border cursor-pointer"
-                          onClick={() => window.open(img, "_blank")}
+                          className="w-12 h-12 cursor-pointer rounded-lg border object-cover hover:opacity-80"
+                          onClick={() => openViewer(item.shopImages.map(getShopImageUrl).filter(Boolean), i)}
                         />
                       ))}
                     </div>
@@ -286,8 +277,12 @@ export default function AdminShopVerification() {
             </div>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between border-b pb-2">
-                <span className="text-gray-500">Name</span>
-                <span className="font-bold">{selected.name}</span>
+                <span className="text-gray-500">Shop Name</span>
+                <span className="font-bold">{selected.shopName}</span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-gray-500">Owner Name</span>
+                <span className="font-bold">{selected.ownerName}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="text-gray-500">CNIC</span>
@@ -298,6 +293,10 @@ export default function AdminShopVerification() {
                 <span className="font-bold text-blue-600">
                   {selected.phone}
                 </span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-gray-500">City</span>
+                <span className="font-bold">{selected.city}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="text-gray-500">Address</span>
@@ -323,12 +322,13 @@ export default function AdminShopVerification() {
             <div className="mt-4">
               <p className="font-bold mb-2">Shop Pictures ({selected.shopImages?.length || 0})</p>
               <div className="grid grid-cols-2 gap-4">
-                {selected.shopImages?.map((img, i) => (
+                {selected.shopImages?.map(getShopImageUrl).filter(Boolean).map((url, i) => (
                   <img
                     key={i}
-                    src={img}
+                    src={url}
                     alt={`Shop ${i + 1}`}
-                    className="w-full h-48 object-cover rounded-xl border"
+                    className="w-full h-48 cursor-pointer rounded-xl border object-cover hover:opacity-80"
+                    onClick={() => openViewer(selected.shopImages.map(getShopImageUrl).filter(Boolean), i)}
                   />
                 ))}
               </div>
@@ -358,6 +358,7 @@ export default function AdminShopVerification() {
           </div>
         </div>
       )}
+      <GlobalImageViewer images={viewer.images} initialIndex={viewer.index} isOpen={viewer.isOpen} onClose={() => setViewer(current => ({ ...current, isOpen: false }))} />
     </div>
   );
 }

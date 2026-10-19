@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL, BASE_URL } from '../config';
+import GlobalImageViewer from '../components/GlobalImageViewer';
 
 export default function TruckVerificationScreen() {
   const [verifications, setVerifications] = useState([]);
@@ -7,6 +8,9 @@ export default function TruckVerificationScreen() {
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(null);
+  const [viewer, setViewer] = useState({ isOpen: false, images: [], index: 0 });
+
+  const openViewer = (images, index) => setViewer({ isOpen: true, images, index });
 
   const fetchVerifications = async () => {
     setLoading(true);
@@ -103,6 +107,12 @@ export default function TruckVerificationScreen() {
     approved: verifications.filter(v => v.status === 'Approved').length,
     rejected: verifications.filter(v => v.status === 'Rejected').length,
   };
+  const selectedImages = selected?.images
+    ? Object.entries(selected.images)
+      .filter(([, url]) => url)
+      .map(([key, url]) => ({ key, url: getImageUrl(url) }))
+      .filter(image => image.url)
+    : [];
 
   if (loading) {
     return <div className="flex justify-center items-center h-[70vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#9B0A2A]"></div><p className="ml-3 text-gray-500">Loading...</p></div>;
@@ -165,7 +175,17 @@ export default function TruckVerificationScreen() {
             </div>
             <h3 className="font-bold mt-4 mb-2">Documents:</h3>
             <div className="grid grid-cols-3 gap-4">
-              {selected.images && Object.entries(selected.images).map(([key, url]) => url && <div key={key} className="border rounded-lg p-2"><p className="text-xs font-semibold capitalize">{key}</p><img src={getImageUrl(url)} alt={key} className="w-full h-32 object-cover rounded" /></div>)}
+              {selectedImages.map((image, index) => (
+                <div key={image.key} className="border rounded-lg p-2">
+                  <p className="text-xs font-semibold capitalize">{image.key}</p>
+                  <img
+                    src={image.url}
+                    alt={image.key}
+                    className="w-full h-32 cursor-pointer rounded object-cover hover:opacity-80"
+                    onClick={() => openViewer(selectedImages.map(item => item.url), index)}
+                  />
+                </div>
+              ))}
             </div>
             {selected.status === 'Pending' && (
               <div className="flex gap-3 mt-6">
@@ -177,6 +197,12 @@ export default function TruckVerificationScreen() {
           </div>
         </div>
       )}
+      <GlobalImageViewer
+        images={viewer.images}
+        initialIndex={viewer.index}
+        isOpen={viewer.isOpen}
+        onClose={() => setViewer(current => ({ ...current, isOpen: false }))}
+      />
     </div>
   );
 }

@@ -2,12 +2,20 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { API_URL } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
+import GlobalImageViewer from '../components/GlobalImageViewer';
+
+const getAttachmentUrls = (attachments = []) => attachments
+  .map(attachment => typeof attachment === 'string' ? attachment : attachment?.url || attachment?.uri)
+  .filter(Boolean);
 
 export default function ComplaintsSupportDriver({ notify }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [actionId, setActionId] = useState(null);
+  const [viewer, setViewer] = useState({ isOpen: false, images: [], index: 0 });
+
+  const openViewer = (images, index) => setViewer({ isOpen: true, images, index });
 
   const fetchComplaints = useCallback(async () => {
     setLoading(true);
@@ -98,7 +106,7 @@ export default function ComplaintsSupportDriver({ notify }) {
               <p className="font-bold text-sm">{c.driverName || c.passengerName || 'Driver'} <span className="font-normal text-white/50">({c.driverId || c.passengerId})</span></p>
               <p className="text-xs text-white/60">Ride: {c.rideId || 'General'} | Contact: {c.contactPreference}</p>
               <p className="mt-2 bg-black/60 p-3 rounded-lg text-sm border border-white/5">{c.description}</p>
-              {c.attachments?.length>0 && <div className="flex gap-2 flex-wrap mt-2">{c.attachments.map((a,i)=>{const src=typeof a==='string'? a : a?.url||a?.uri; return src? <a key={i} href={src} target="_blank" rel="noreferrer"><img src={src} alt="" className="w-20 h-20 rounded-lg object-cover border border-white/10 hover:scale-105 transition-transform" /></a>:null})}</div>}
+              {getAttachmentUrls(c.attachments).length > 0 && <div className="flex gap-2 flex-wrap mt-2">{getAttachmentUrls(c.attachments).map((src, i) => <img key={i} src={src} alt="" className="w-20 h-20 cursor-pointer rounded-lg border border-white/10 object-cover transition-transform hover:scale-105 hover:opacity-80" onClick={() => openViewer(getAttachmentUrls(c.attachments), i)} />)}</div>}
             </div>
 
             <div className="flex gap-2 mt-4">
@@ -109,6 +117,7 @@ export default function ComplaintsSupportDriver({ notify }) {
           </div>
         ))}
       </div>}
+      <GlobalImageViewer images={viewer.images} initialIndex={viewer.index} isOpen={viewer.isOpen} onClose={() => setViewer(current => ({ ...current, isOpen: false }))} />
     </div>
   );
 }

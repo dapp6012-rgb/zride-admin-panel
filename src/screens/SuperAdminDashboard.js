@@ -7,6 +7,7 @@ import L from 'leaflet';
 import { API_URL } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
+import GlobalImageViewer from '../components/GlobalImageViewer';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -97,6 +98,9 @@ export default function SuperAdminDashboard({ notify, setScreen }) {
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
   const [error, setError] = useState('');
+  const [viewer, setViewer] = useState({ isOpen: false, images: [], index: 0 });
+
+  const openViewer = (images, index) => setViewer({ isOpen: true, images, index });
 
   useEffect(() => {
     let active = true;
@@ -256,6 +260,7 @@ export default function SuperAdminDashboard({ notify, setScreen }) {
         </SectionCard>
       </div>
     </ScreenFrame>
+    <GlobalImageViewer images={viewer.images} initialIndex={viewer.index} isOpen={viewer.isOpen} onClose={() => setViewer(current => ({ ...current, isOpen: false }))} />
     </div>
   );
 }

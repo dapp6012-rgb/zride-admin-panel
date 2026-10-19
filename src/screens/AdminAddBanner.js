@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { API_URL, API_BASE_URL } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
+import GlobalImageViewer from '../components/GlobalImageViewer';
 
 const LINKS = [
   { value: 'rent-cars', label: 'Rent A Cars Page' },
@@ -38,6 +39,9 @@ export default function AdminAddBanner() {
   const [deletingId, setDeletingId] = useState(null);
   const [retryUpload, setRetryUpload] = useState(false);
   const fileInputRef = useRef(null);
+  const [viewer, setViewer] = useState({ isOpen: false, images: [], index: 0 });
+
+  const openViewer = (images, index) => setViewer({ isOpen: true, images, index });
 
   const fetchCities = useCallback(async () => {
     try {
@@ -164,6 +168,10 @@ export default function AdminAddBanner() {
     const url = banner.image || banner.video || '';
     return url.match(/\.(mp4|mov|webm|avi)$/i);
   }
+  const bannerImages = filteredBanners
+    .filter(banner => !isVideoFile(banner))
+    .map(banner => ({ banner, url: getBannerUrl(banner.image) }))
+    .filter(item => item.url);
 
   return (
     <div className="p-6 max-w-5xl mx-auto text-white">
@@ -205,7 +213,7 @@ export default function AdminAddBanner() {
             {preview && (
               previewType === 'video'?
               <video src={preview} className="mt-3 w-full h-48 object-cover rounded-xl border border-white/10" controls muted loop /> :
-              <img src={preview} alt="preview" className="mt-3 w-full h-40 object-cover rounded-xl border border-white/10" />
+              <img src={preview} alt="preview" className="mt-3 w-full h-40 cursor-pointer rounded-xl border border-white/10 object-cover hover:opacity-80" onClick={() => openViewer([preview], 0)} />
             )}
           </div>
 
@@ -228,7 +236,12 @@ export default function AdminAddBanner() {
               {isVideoFile(b)? (
                 <video src={getBannerUrl(b.image)} className="w-full h-36 object-cover" muted autoPlay loop playsInline />
               ) : (
-                <img src={getBannerUrl(b.image)} alt={b.title} className="w-full h-36 object-cover" />
+                <img
+                  src={getBannerUrl(b.image)}
+                  alt={b.title}
+                  className="w-full h-36 cursor-pointer object-cover hover:opacity-80"
+                  onClick={() => openViewer(bannerImages.map(item => item.url), bannerImages.findIndex(item => item.banner._id === b._id))}
+                />
               )}
               <div className="p-3"><p className="font-bold text-sm truncate">{b.title} {isVideoFile(b)? '🎬' : ''}</p><p className="text-xs text-white/60">{b.city} • {b.link} • {b.type || 'image'}</p></div>
               <button onClick={()=>handleDelete(b._id)} disabled={deletingId===b._id} className="absolute top-2 right-2 bg-red-500 text-white text-xs px-3 py-1.5 rounded-full font-bold opacity-0 group-hover:opacity-100 transition">{deletingId===b._id? '...' : 'Delete'}</button>
@@ -238,6 +251,7 @@ export default function AdminAddBanner() {
         {listLoading && <p className="text-center py-8 text-white/40">Loading banners...</p>}
         {!listLoading && filteredBanners.length===0 && <p className="text-center py-8 text-white/40">No banners in {filterCity}</p>}
       </div>
+      <GlobalImageViewer images={viewer.images} initialIndex={viewer.index} isOpen={viewer.isOpen} onClose={() => setViewer(current => ({ ...current, isOpen: false }))} />
     </div>
   );
 }

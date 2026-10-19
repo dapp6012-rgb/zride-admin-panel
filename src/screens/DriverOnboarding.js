@@ -4,12 +4,16 @@ import { API_BASE_URL as API_URL } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 import { Button } from '../components/ControlRoom';
+import GlobalImageViewer from '../components/GlobalImageViewer';
 
 export default function DriverOnboarding({ notify }) {
   const [applicants, setApplicants] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [viewer, setViewer] = useState({ isOpen: false, images: [], index: 0 });
   const intervalRef = useRef(null);
+
+  const openViewer = (images, index) => setViewer({ isOpen: true, images, index });
 
   const fetchDrivers = async () => {
     try {
@@ -125,6 +129,16 @@ export default function DriverOnboarding({ notify }) {
     return null;
   };
 
+  const documentImages = selected ? [
+    { label: 'CNIC Front', url: getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'cnicFront', 'cnicFrontPic') },
+    { label: 'CNIC Back', url: getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'cnicBack', 'cnicBackPic') },
+    { label: 'Licence Front', url: getPic(selected, 'licenceInfo.licenceFrontPic', 'licenceInfo.licenceFront', 'licenceFront', 'licenceFrontPic') },
+    { label: 'Vehicle Front', url: getPic(selected, 'vehicleInfo.vehicleFrontPic', 'vehicleInfo.frontPic', 'vehicleFront', 'vehicleFrontPic', 'frontPic') },
+    { label: 'Vehicle Back', url: getPic(selected, 'vehicleInfo.vehicleBackPic', 'vehicleInfo.backPic', 'vehicleBack', 'vehicleBackPic', 'backPic') },
+    { label: 'Selfie', url: getPic(selected, 'selfie', 'selfieWithLicence') },
+  ] : [];
+  const documentUrls = documentImages.filter(image => image.url).map(image => image.url);
+
   const getAiBadge = (ai) => {
     if (!ai) return <Badge tone="warn">No AI Check</Badge>;
     if (ai.status === 'AI_APPROVED') return <Badge tone="good">🤖 AI: APPROVED {ai.faceScore || ''}</Badge>;
@@ -238,12 +252,25 @@ export default function DriverOnboarding({ notify }) {
               <div style={{gridColumn:'span 2', background:'#272727', padding:16, borderRadius:12, color:'white'}}>
                 <h4 style={{color:'white', marginBottom:10}}>📸 All Uploaded Documents (Real Pics)</h4>
                 <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12}}>
-                  <div><small style={{color:'white'}}>CNIC Front</small><br/>{getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'cnicFront', 'cnicFrontPic')? <img src={getPic(selected, 'basicInfo.cnicFrontPic', 'basicInfo.cnicFront', 'cnicFront', 'cnicFrontPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
-                  <div><small style={{color:'white'}}>CNIC Back</small><br/>{getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'cnicBack', 'cnicBackPic')? <img src={getPic(selected, 'basicInfo.cnicBackPic', 'basicInfo.cnicBack', 'cnicBack', 'cnicBackPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
-                  <div><small style={{color:'white'}}>Licence Front</small><br/>{getPic(selected, 'licenceInfo.licenceFrontPic', 'licenceInfo.licenceFront', 'licenceFront', 'licenceFrontPic')? <img src={getPic(selected, 'licenceInfo.licenceFrontPic', 'licenceInfo.licenceFront', 'licenceFront', 'licenceFrontPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
-                  <div><small style={{color:'white'}}>Vehicle Front</small><br/>{getPic(selected, 'vehicleInfo.vehicleFrontPic', 'vehicleInfo.frontPic', 'vehicleFront', 'vehicleFrontPic', 'frontPic')? <img src={getPic(selected, 'vehicleInfo.vehicleFrontPic', 'vehicleInfo.frontPic', 'vehicleFront', 'vehicleFrontPic', 'frontPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
-                  <div><small style={{color:'white'}}>Vehicle Back</small><br/>{getPic(selected, 'vehicleInfo.vehicleBackPic', 'vehicleInfo.backPic', 'vehicleBack', 'vehicleBackPic', 'backPic')? <img src={getPic(selected, 'vehicleInfo.vehicleBackPic', 'vehicleInfo.backPic', 'vehicleBack', 'vehicleBackPic', 'backPic')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
-                  <div><small style={{color:'white'}}>Selfie</small><br/>{getPic(selected, 'selfie', 'selfieWithLicence')? <img src={getPic(selected, 'selfie', 'selfieWithLicence')} style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}} /> : <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>}</div>
+                  {documentImages.map((image) => {
+                    const imageIndex = documentUrls.indexOf(image.url);
+                    return (
+                      <div key={image.label}>
+                        <small style={{color:'white'}}>{image.label}</small><br/>
+                        {image.url ? (
+                          <img
+                            src={image.url}
+                            alt={image.label}
+                            className="cursor-pointer hover:opacity-80"
+                            style={{width:'100%', height:150, objectFit:'cover', borderRadius:8}}
+                            onClick={() => openViewer(documentUrls, imageIndex)}
+                          />
+                        ) : (
+                          <div style={{background:'#333', height:150, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white'}}>No Image</div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -272,6 +299,7 @@ export default function DriverOnboarding({ notify }) {
         </div>
       )}
     </ScreenFrame>
+    <GlobalImageViewer images={viewer.images} initialIndex={viewer.index} isOpen={viewer.isOpen} onClose={() => setViewer(current => ({ ...current, isOpen: false }))} />
     </div>
   );
 }
