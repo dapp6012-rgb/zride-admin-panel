@@ -20,17 +20,24 @@ export default function AdminShopVerification() {
   const [successMsg, setSuccessMsg] = useState("");
   const [viewer, setViewer] = useState({ isOpen: false, images: [], index: 0 });
 
+  // FIX: token yahan define kiya - yehi missing tha
+  const token = localStorage.getItem("adminToken") || localStorage.getItem("token") || "";
+
   const openViewer = (images, index) => setViewer({ isOpen: true, images, index });
 
   const fetchRequests = async () => {
     setLoading(true);
     setError("");
     try {
+      const headers = {
+        "bypass-tunnel-reminder": "true",
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const res = await axios.get(`${API_URL}/shops`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "bypass-tunnel-reminder": "true",
-        },
+        headers: headers,
       });
 
       console.log("Admin API Response:", res.data);
@@ -66,11 +73,19 @@ export default function AdminShopVerification() {
     setActionLoading(id + action);
     setSuccessMsg("");
     try {
+      const headers = {
+        "bypass-tunnel-reminder": "true",
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const res = await axios.put(
         `${API_URL}/shops/${encodeURIComponent(id)}/status`,
         { status: action === "approve" ? "approved" : "rejected" },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: headers,
         }
       );
 

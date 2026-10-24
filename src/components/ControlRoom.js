@@ -14,6 +14,7 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
       items: [
         { key: 'dashboard', label: 'Super Admin Dashboard', icon: LayoutDashboard },
         { key: 'shop-requests', label: 'Shop Requests', icon: Store },
+        { key: 'shop-top-settings', label: 'Shop Top Settings', icon: Star },
         { key: 'showroom-requests', label: 'ShowRoom Request', icon: Store },
         { key: 'banners', label: 'Banner Manager', icon: ImageIcon },
         { key: 'truck-verification', label: 'Truck Verification', icon: Truck },

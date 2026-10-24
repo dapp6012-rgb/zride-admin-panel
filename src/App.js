@@ -25,6 +25,7 @@ import UsersManagement from './screens/UsersManagement';
 import ZoneManagement from './screens/ZoneManagement';
 import AdminShowRoomVerificationScreen from './screens/AdminShowRoomVerificationScreen';
 import AdminShopVerification from './screens/AdminShopVerification';
+import ShopTopSettings from './screens/ShopTopSettings';
 import AdminAddBanner from './screens/AdminAddBanner';
 import AdminAddCityScreen from './screens/AdminAddCityScreen';
 import TruckRequestScreen from './screens/TruckRequestScreen';
@@ -82,6 +83,7 @@ const SCREENS_MAP = {
 
   // ===== SHOWROOM / SHOP VERIFICATION =====
   'shop-requests': AdminShopVerification,
+  'shop-top-settings': ShopTopSettings,
   'showroom-verification': AdminShowRoomVerificationScreen,
   'show-room-verification': AdminShowRoomVerificationScreen,
   'admin-showroom-verification': AdminShowRoomVerificationScreen,
