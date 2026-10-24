@@ -24,7 +24,7 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
         { key: 'truck-history', label: 'Truck History', icon: Truck },
         { key: 'city-dashboard', label: 'City Dashboard', icon: Building2 },
         { key: 'add-city', label: 'Add Country and City', icon: MapPin },
-        { key: 'city-deiver-onboarding', label: 'Driver Onboarding', icon: Shield },
+        { key: 'driver-onboarding', label: 'Driver Onboarding', icon: Shield }, // FIXED
         { key: 'city-performance', label: 'Driver Performance', icon: Users },
         { key: 'city-vehicles', label: 'Vehicle Type', icon: Car },
         { key: 'zones', label: 'Zone Management', icon: MapPin },
@@ -89,117 +89,33 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
     </div>
   );
 }
-
+// ... baaki Button, Badge, ScreenFrame waisa hi rahega
 export function Button({ variant = 'primary', children, style, ...props }) {
   const primary = variant === 'primary';
   return (
-    <button
-      {...props}
-      style={{
-        border: primary ? '1px solid #A7E92F' : '1px solid rgba(255,255,255,0.2)',
-        borderRadius: 8,
-        padding: '8px 14px',
-        background: primary ? '#A7E92F' : '#20242b',
-        color: primary ? '#101010' : '#fff',
-        fontWeight: 700,
-        cursor: props.disabled ? 'not-allowed' : 'pointer',
-        opacity: props.disabled ? 0.6 : 1,
-        ...style,
-      }}
-    >
-      {children}
-    </button>
+    <button {...props} style={{ border: primary ? '1px solid #A7E92F' : '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '8px 14px', background: primary ? '#A7E92F' : '#20242b', color: primary ? '#101010' : '#fff', fontWeight: 700, cursor: props.disabled ? 'not-allowed' : 'pointer', opacity: props.disabled ? 0.6 : 1, ...style }}>{children}</button>
   );
 }
-
 export function Badge({ tone = 'warn', children }) {
-  const colors = {
-    good: { background: '#14532d', color: '#bbf7d0' },
-    warn: { background: '#713f12', color: '#fde68a' },
-    bad: { background: '#7f1d1d', color: '#fecaca' },
-  };
-  return (
-    <span style={{ ...(colors[tone] || colors.warn), display: 'inline-flex', alignItems: 'center', borderRadius: 999, padding: '3px 9px', fontSize: 12, fontWeight: 700 }}>
-      {children}
-    </span>
-  );
+  const colors = { good: { background: '#14532d', color: '#bbf7d0' }, warn: { background: '#713f12', color: '#fde68a' }, bad: { background: '#7f1d1d', color: '#fecaca' } };
+  return (<span style={{ ...(colors[tone] || colors.warn), display: 'inline-flex', alignItems: 'center', borderRadius: 999, padding: '3px 9px', fontSize: 12, fontWeight: 700 }}>{children}</span>);
 }
-
 export function ScreenFrame({ eyebrow, title, description, actions, children }) {
-  return (
-    <main style={{ padding: 24, color: '#fff' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}>
-        <div>
-          {eyebrow && <div style={{ color: '#A7E92F', fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>{eyebrow}</div>}
-          {title && <h1 style={{ margin: '6px 0', fontSize: 28, fontWeight: 800 }}>{title}</h1>}
-          {description && <p style={{ margin: 0, color: '#cbd5e1' }}>{description}</p>}
-        </div>
-        {actions}
-      </header>
-      {children}
-    </main>
-  );
+  return (<main style={{ padding: 24, color: '#fff' }}><header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20, marginBottom: 20, flexWrap: 'wrap' }}><div>{eyebrow && <div style={{ color: '#A7E92F', fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>{eyebrow}</div>}{title && <h1 style={{ margin: '6px 0', fontSize: 28, fontWeight: 800 }}>{title}</h1>}{description && <p style={{ margin: 0, color: '#cbd5e1' }}>{description}</p>}</div>{actions}</header>{children}</main>);
 }
-
 export function SectionCard({ title, meta, children }) {
-  return (
-    <section style={{ minWidth: 0, padding: 18, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, background: '#111827', color: '#fff' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-        <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{title}</h2>
-        {meta && <span style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700 }}>{meta}</span>}
-      </header>
-      {children}
-    </section>
-  );
+  return (<section style={{ minWidth: 0, padding: 18, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, background: '#111827', color: '#fff' }}><header style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}><h2 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{title}</h2>{meta && <span style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700 }}>{meta}</span>}</header>{children}</section>);
 }
-
 export function StatCard({ icon, label, value, note }) {
-  return (
-    <section className="stat" style={{ minWidth: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <span className="stat-label">{label}</span>
-        {icon}
-      </div>
-      <div className="stat-value">{value}</div>
-      {note && <div style={{ color: '#cbd5e1', fontSize: 12 }}>{note}</div>}
-    </section>
-  );
+  return (<section className="stat" style={{ minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}><span className="stat-label">{label}</span>{icon}</div><div className="stat-value">{value}</div>{note && <div style={{ color: '#cbd5e1', fontSize: 12 }}>{note}</div>}</section>);
 }
-
 export function MiniMap({ label, pins = 0 }) {
-  return (
-    <div role="img" aria-label={`${label}: ${pins} online drivers, location detail unavailable`} style={{ minHeight: 180, display: 'grid', placeContent: 'center', gap: 8, textAlign: 'center', borderRadius: 10, background: '#0b1220', color: '#cbd5e1' }}>
-      <strong>{label}</strong>
-      <span>{pins} online drivers reported; live coordinates are unavailable.</span>
-    </div>
-  );
+  return (<div role="img" aria-label={`${label}: ${pins} online drivers, location detail unavailable`} style={{ minHeight: 180, display: 'grid', placeContent: 'center', gap: 8, textAlign: 'center', borderRadius: 10, background: '#0b1220', color: '#cbd5e1' }}><strong>{label}</strong><span>{pins} online drivers reported; live coordinates are unavailable.</span></div>);
 }
-
 export function DataScreen({ title, description, rows = [], columns = [], renderRow }) {
-  return (
-    <section style={{ color: '#fff' }}>
-      <header style={{ marginBottom: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{title}</h2>
-        {description && <p style={{ margin: '4px 0 0', color: '#cbd5e1' }}>{description}</p>}
-      </header>
-      <div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead><tr>{columns.map(column => <th key={column} style={{ padding: 12, background: '#1f2937', color: '#e2e8f0' }}>{column}</th>)}</tr></thead>
-          <tbody>
-            {rows.map((row, index) => renderRow(row, index))}
-            {rows.length === 0 && <tr><td colSpan={columns.length} style={{ padding: 20, textAlign: 'center', color: '#94a3b8' }}>No records available.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
+  return (<section style={{ color: '#fff' }}><header style={{ marginBottom: 12 }}><h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{title}</h2>{description && <p style={{ margin: '4px 0 0', color: '#cbd5e1' }}>{description}</p>}</header><div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12 }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}><thead><tr>{columns.map(column => <th key={column} style={{ padding: 12, background: '#1f2937', color: '#e2e8f0' }}>{column}</th>)}</tr></thead><tbody>{rows.map((row, index) => renderRow(row, index))}{rows.length === 0 && <tr><td colSpan={columns.length} style={{ padding: 20, textAlign: 'center', color: '#94a3b8' }}>No records available.</td></tr>}</tbody></table></div></section>);
 }
-
 export function Toast({ message }) {
   if (!message) return null;
-  return (
-    <div role="status" style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 1000, borderRadius: 10, background: '#111827', color: '#fff', padding: '12px 16px', boxShadow: '0 8px 30px rgba(0,0,0,0.35)' }}>
-      {message}
-    </div>
-  );
+  return (<div role="status" style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 1000, borderRadius: 10, background: '#111827', color: '#fff', padding: '12px 16px', boxShadow: '0 8px 30px rgba(0,0,0,0.35)' }}>{message}</div>);
 }

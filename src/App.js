@@ -61,12 +61,24 @@ class ErrorBoundary extends React.Component {
 
 const SCREENS_MAP = {
   'dashboard': SuperAdminDashboard, 'super-admin': SuperAdminDashboard,
-  'city-dashboard': CityDashboard, 'city-onboarding': DriverOnboarding,
-  'city-driver-onboarding': DriverOnboarding, 'city-performance': DriverPerformance,
-  'city-driver-performance': DriverPerformance, 'city-vehicles': VehicleTypes,
-  'city-vehicle-type': VehicleTypes, 'zones': ZoneManagement,
-  'zone-management': ZoneManagement, 'add-city': AdminAddCityScreen,
-  'admin-add-city': AdminAddCityScreen, 'commission': Commission,
+  'city-dashboard': CityDashboard, 
+  
+  // ===== FIXED: Driver Onboarding ke saare keys add kiye =====
+  'city-onboarding': DriverOnboarding,
+  'city-driver-onboarding': DriverOnboarding, 
+  'city-deiver-onboarding': DriverOnboarding, // purana typo support ke liye
+  'driver-onboarding': DriverOnboarding, // NEW - ye missing tha
+  'driver-onboard': DriverOnboarding,
+
+  'city-performance': DriverPerformance,
+  'city-driver-performance': DriverPerformance, 
+  'city-vehicles': VehicleTypes,
+  'city-vehicle-type': VehicleTypes, 
+  'zones': ZoneManagement,
+  'zone-management': ZoneManagement, 
+  'add-city': AdminAddCityScreen,
+  'admin-add-city': AdminAddCityScreen, 
+  'commission': Commission,
   'users': UsersManagement, 'user-management': UsersManagement,
   'rides': UsersHistory, 'live-rides-history': UsersHistory,
   'live-passenger-history': UsersHistory, 'passenger-history': UsersHistory,
@@ -84,6 +96,9 @@ const SCREENS_MAP = {
   // ===== SHOWROOM / SHOP VERIFICATION =====
   'shop-requests': AdminShopVerification,
   'shop-top-settings': ShopTopSettings,
+  'showroom-requests': AdminShowRoomVerificationScreen, // FIXED: ye missing tha
+  'showroom-request': AdminShowRoomVerificationScreen,
+  'show-room-request': AdminShowRoomVerificationScreen,
   'showroom-verification': AdminShowRoomVerificationScreen,
   'show-room-verification': AdminShowRoomVerificationScreen,
   'admin-showroom-verification': AdminShowRoomVerificationScreen,
