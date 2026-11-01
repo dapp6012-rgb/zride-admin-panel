@@ -13,13 +13,39 @@ const DriverHistoryScreen = () => {
     if (showLoading) setLoading(true);
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const response = await axios.get(`${API_URL}/driver-accounts`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const drivers = response.data.drivers;
-      if (!Array.isArray(drivers)) throw new Error("Server returned an invalid driver account list");
-      setHistory(drivers);
+      const headers = {
+        "bypass-tunnel-reminder": "true",
+        ...(token ? { Authorization: "Bearer " + token } : {}),
+      };
+      const endpoints = [
+        `${API_URL}/drivers/history`,
+        `${API_URL}/drivers`,
+        `${API_URL}/ride-drivers`,
+      ];
+      let lastError = null;
+
+      for (const endpoint of endpoints) {
+        try {
+          const response = await axios.get(endpoint, { headers });
+          const data = response.data;
+          const drivers = Array.isArray(data)
+            ? data
+            : data?.drivers || data?.data || data?.history;
+          if (!Array.isArray(drivers)) {
+            throw new Error("Server returned an invalid driver history list");
+          }
+          setHistory(drivers);
+          setError("");
+          return;
+        } catch (requestError) {
+          lastError = requestError;
+          if (requestError.response?.status !== 404) throw requestError;
+        }
+      }
+
+      setHistory([]);
       setError("");
+      console.warn("Driver history endpoints returned 404:", lastError?.message);
     } catch (requestError) {
       const message = requestError.response?.data?.message || requestError.message;
       setError(`Driver history load nahi hui: ${message}`);
