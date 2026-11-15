@@ -64,16 +64,35 @@ export default function AdminAddCityScreen({ notify }) {
     }
     setLoading(l => ({ ...l, city: true }));
     try {
+      const lat = parseFloat(cityForm.lat);
+      const lng = parseFloat(cityForm.lng);
+
+      // FIX 1: Backend ko Polygon chahiye tha - Lat/Lng se 5 points ka Polygon bana diya
+      // GeoJSON format + simple array dono bheje hain taake koi bhi backend accept kar le
+      const ring = [
+        [lng - 0.2, lat - 0.15],
+        [lng + 0.2, lat - 0.15],
+        [lng + 0.2, lat + 0.15],
+        [lng - 0.2, lat + 0.15],
+        [lng - 0.2, lat - 0.15]
+      ];
+
       const payload = {
         name: cityForm.name.trim(),
         city: cityForm.name.trim(),
         country: cityForm.country.trim(),
         countryId: cityForm.countryId,
-        lat: parseFloat(cityForm.lat),
-        lng: parseFloat(cityForm.lng),
+        lat: lat,
+        lng: lng,
         baseFare: parseFloat(cityForm.baseFare),
         perKm: parseFloat(cityForm.perKm),
-        isActive: true
+        isActive: true,
+        // Backend ke har format ke liye
+        polygon: { type: 'Polygon', coordinates: [ring] },
+        coordinates: ring,
+        boundary: ring,
+        geometry: { type: 'Polygon', coordinates: [ring] },
+        area: { type: 'Polygon', coordinates: [ring] }
       };
       const res = await fetch(`${API_URL}/zones`, {
         method: 'POST',
@@ -81,7 +100,7 @@ export default function AdminAddCityScreen({ notify }) {
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to add city');
+      if (!res.ok) throw new Error(data.message || data.error || 'Failed to add city');
       notify?.(`${payload.country} me ${payload.name} added ✅`);
       setCityForm(f => ({ ...f, name: '', lat: '', lng: '', baseFare: '', perKm: '' }));
       await fetchCities();
@@ -98,7 +117,6 @@ export default function AdminAddCityScreen({ notify }) {
     } catch (e) { alert(e.message) }
   };
 
-  // NEW: Country Delete - pehle uski saari cities delete, phir country delete
   const handleDeleteCountry = async (country) => {
     const countryId = String(country._id);
     const relatedCities = cities.filter(c => String(c.countryId) === countryId || c.country === country.name);
@@ -106,17 +124,14 @@ export default function AdminAddCityScreen({ notify }) {
     if (!window.confirm(`Delete ${country.name} ${country.flag}?\nIs ki ${relatedCities.length} cities bhi delete ho jayengi!`)) return;
 
     try {
-      // 1. Pehle us country ki saari cities delete karo
       for (const city of relatedCities) {
         await fetch(`${API_URL}/zones/${city._id}`, { method: 'DELETE' });
       }
-      // 2. Phir country delete karo
       const res = await fetch(`${API_URL}/countries/${countryId}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || data.message || 'Failed to delete country');
 
       notify?.(`${country.name} deleted 🗑️`);
-      // 3. Agar deleted country select thi to form reset karo
       if (String(cityForm.countryId) === countryId) {
         setCityForm(f => ({ ...f, country: '', countryId: '' }));
       }
@@ -128,6 +143,7 @@ export default function AdminAddCityScreen({ notify }) {
     }
   };
 
+  // FIX 2: Export ka bracket fix kiya
   const handleExport = () => {
     if (tab === 'country') {
       exportExcel(countries.map(c => ({ Name: c.name, Code: c.code, Flag: c.flag, Length: c.length })), 'Countries');
@@ -156,10 +172,11 @@ export default function AdminAddCityScreen({ notify }) {
               <input className="w-full p-3 rounded-lg bg-black border border-white/10" placeholder="Code (+39)" value={countryForm.code} onChange={e => setCountryForm({ ...countryForm, code: e.target.value })} />
               <input className="w-full p-3 rounded-lg bg-black border border-white/10" placeholder="Flag (🇮🇹)" value={countryForm.flag} onChange={e => setCountryForm({ ...countryForm, flag: e.target.value })} />
             </div>
+            {/* FIX 3: Length wala input wapas laga diya */}
+            <input className="w-full p-3 rounded-lg bg-black border border-white/10" placeholder="Phone Length (10)" value={countryForm.length} onChange={e => setCountryForm({ ...countryForm, length: e.target.value })} />
             <button onClick={handleAddCountry} disabled={loading.country} className="w-full bg-[#A7E92F] text-black font-bold p-3 rounded-lg disabled:opacity-50">{loading.country ? 'Saving...' : 'Add Country'}</button>
           </div>
 
-          {/* NEW: Added Countries List with Delete */}
           <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/10">
             <h3 className="font-bold mb-3 text-sm">Added Countries ({countries.length})</h3>
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
