@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   AlertTriangle, BarChart3, Bell, Building2, Car, ChevronDown, CircleHelp,
   LayoutDashboard, History, Image as ImageIcon, MapPin, Menu, Search,
-  Shield, Star, Users, X, Store, Phone, Truck
+  Shield, Star, Users, X, Store, Phone
 } from 'lucide-react';
 
 export function Shell({ screen, setScreen, role, onLogout, children }) {
@@ -15,16 +15,12 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
         { key: 'dashboard', label: 'Super Admin Dashboard', icon: LayoutDashboard },
         { key: 'shop-requests', label: 'Shop Requests', icon: Store },
         { key: 'shop-top-settings', label: 'Shop Top Settings', icon: Star },
-        { key: 'showroom-requests', label: 'ShowRoom Request', icon: Store },
         { key: 'banners', label: 'Banner Manager', icon: ImageIcon },
-        { key: 'truck-verification', label: 'Truck Verification', icon: Truck },
         { key: 'shop-history', label: 'Shop History', icon: Store },
         { key: 'driver-history', label: 'Driver History', icon: Users },
-        { key: 'showroom-owner-history', label: 'ShowRoom History', icon: Building2 },
-        { key: 'truck-history', label: 'Truck History', icon: Truck },
         { key: 'city-dashboard', label: 'City Dashboard', icon: Building2 },
         { key: 'add-city', label: 'Add Country and City', icon: MapPin },
-        { key: 'driver-onboarding', label: 'Driver Onboarding', icon: Shield }, // FIXED
+        { key: 'driver-onboarding', label: 'Driver Onboarding', icon: Shield },
         { key: 'city-performance', label: 'Driver Performance', icon: Users },
         { key: 'city-vehicles', label: 'Vehicle Type', icon: Car },
         { key: 'zones', label: 'Zone Management', icon: MapPin },
