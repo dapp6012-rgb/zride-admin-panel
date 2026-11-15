@@ -12,9 +12,8 @@ export default function AdminAddCityScreen({ notify }) {
   const [isWorldwide, setIsWorldwide] = useState(false);
   const [isWorldwideCountry, setIsWorldwideCountry] = useState(false);
 
-  // FIX: Length ab Min / Max ho gayi hai taake poori duniya cover ho
   const [countryForm, setCountryForm] = useState({ name: '', code: '', flag: '', length: '10', minLength: '6', maxLength: '15' });
-  const [cityForm, setCityForm] = useState({ name: '', country: '', countryId: '', lat: '', lng: '', baseFare: '', perKm: '' });
+  const [cityForm, setCityForm] = useState({ name: '', country: '', countryId: '', lat: '', lng: '', baseFare: '', perKm: '', demandLevel: 'medium' });
 
   const fetchCountries = useCallback(async () => {
     try {
@@ -49,7 +48,6 @@ export default function AdminAddCityScreen({ notify }) {
     }
     setLoading(l => ({ ...l, country: true }));
     try {
-      // WORLDWIDE: 6 se 15 tak, warna user wali value
       const minLength = isWorldwideCountry ? 6 : (parseInt(countryForm.minLength) || 6);
       const maxLength = isWorldwideCountry ? 15 : (parseInt(countryForm.maxLength) || parseInt(countryForm.length) || 15);
       const payload = {
@@ -130,6 +128,7 @@ export default function AdminAddCityScreen({ notify }) {
         ];
       }
 
+      const demandLevel = (cityForm.demandLevel || 'medium').toLowerCase();
       const payload = {
         name: cityForm.name.trim(),
         city: cityForm.name.trim(),
@@ -141,6 +140,10 @@ export default function AdminAddCityScreen({ notify }) {
         perKm: parseFloat(cityForm.perKm),
         isActive: true,
         isWorldwide: isWorldwide,
+        // FIX: Demand Level wala error yahan fix hua hai
+        demandLevel: demandLevel,
+        demand: demandLevel,
+        surgeMultiplier: demandLevel === 'high' ? 1.5 : demandLevel === 'low' ? 1 : 1.2,
         polygon: polygon,
         coordinates: polygon,
         boundary: polygon,
@@ -156,7 +159,7 @@ export default function AdminAddCityScreen({ notify }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || data.error || 'Failed to add city');
       notify?.(`${payload.country} me ${payload.name} added ✅`);
-      setCityForm(f => ({ ...f, name: '', lat: '', lng: '', baseFare: '', perKm: '' }));
+      setCityForm(f => ({ ...f, name: '', lat: '', lng: '', baseFare: '', perKm: '', demandLevel: 'medium' }));
       setIsWorldwide(false);
       await fetchCities();
     } catch (e) { notify?.(`Error: ${e.message}`); alert('Error: ' + e.message) }
@@ -209,7 +212,7 @@ export default function AdminAddCityScreen({ notify }) {
     if (tab === 'country') {
       exportExcel(countries.map(c => ({ Name: c.name, Code: c.code, Flag: c.flag, Length: getCountryLengthText(c) })), 'Countries');
     } else {
-      exportExcel(cities.map(z => ({ City: z.name, Country: z.country, Lat: z.lat, Lng: z.lng, BaseFare: z.baseFare, PerKm: z.perKm, Worldwide: z.isWorldwide ? 'Yes' : 'No' })), 'Cities');
+      exportExcel(cities.map(z => ({ City: z.name, Country: z.country, Lat: z.lat, Lng: z.lng, BaseFare: z.baseFare, PerKm: z.perKm, Demand: z.demandLevel || z.demand || 'medium', Worldwide: z.isWorldwide ? 'Yes' : 'No' })), 'Cities');
     }
   };
 
@@ -233,16 +236,9 @@ export default function AdminAddCityScreen({ notify }) {
               <input className="w-full p-3 rounded-lg bg-black border border-white/10" placeholder="Code (+39)" value={countryForm.code} onChange={e => setCountryForm({ ...countryForm, code: e.target.value })} />
               <input className="w-full p-3 rounded-lg bg-black border border-white/10" placeholder="Flag (🇮🇹)" value={countryForm.flag} onChange={e => setCountryForm({ ...countryForm, flag: e.target.value })} />
             </div>
-
-            {/* WORLDWIDE COUNTRY TOGGLE - Length pure world ke liye */}
-            <button
-              type="button"
-              onClick={() => setIsWorldwideCountry(!isWorldwideCountry)}
-              className={`w-full p-3 rounded-lg font-bold text-sm border ${isWorldwideCountry ? 'bg-[#A7E92F] text-black border-[#A7E92F]' : 'bg-black text-white/70 border-white/10'}`}
-            >
+            <button type="button" onClick={() => setIsWorldwideCountry(!isWorldwideCountry)} className={`w-full p-3 rounded-lg font-bold text-sm border ${isWorldwideCountry ? 'bg-[#A7E92F] text-black border-[#A7E92F]' : 'bg-black text-white/70 border-white/10'}`}>
               {isWorldwideCountry ? '🌍 Worldwide ON - Phone 6 se 15 digit tak' : '🌍 Worldwide - Pure World ke liye Click Karo'}
             </button>
-
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-[11px] text-white/50 mb-1 ml-1">Min Phone Length</p>
@@ -282,14 +278,7 @@ export default function AdminAddCityScreen({ notify }) {
               {countries.length === 0 ? <option value="">Pehele Country Add Karo</option> : countries.map(c => <option key={c._id} value={String(c._id)}>{c.flag} {c.name}</option>)}
             </select>
 
-            <button
-              type="button"
-              onClick={() => {
-                setIsWorldwide(!isWorldwide);
-                if (!isWorldwide) setCityForm(f => ({ ...f, name: 'Worldwide', lat: '0', lng: '0' }));
-              }}
-              className={`w-full p-3 rounded-lg font-bold text-sm border ${isWorldwide ? 'bg-[#A7E92F] text-black border-[#A7E92F]' : 'bg-black text-white/70 border-white/10'}`}
-            >
+            <button type="button" onClick={() => { setIsWorldwide(!isWorldwide); if (!isWorldwide) setCityForm(f => ({ ...f, name: 'Worldwide', lat: '0', lng: '0' })); }} className={`w-full p-3 rounded-lg font-bold text-sm border ${isWorldwide ? 'bg-[#A7E92F] text-black border-[#A7E92F]' : 'bg-black text-white/70 border-white/10'}`}>
               {isWorldwide ? '🌍 Worldwide ON - Poori Duniya' : '🌍 Worldwide - Poori Duniya ke liye Click Karo'}
             </button>
 
@@ -302,6 +291,13 @@ export default function AdminAddCityScreen({ notify }) {
               <input className="w-full p-3 rounded-lg bg-black border border-white/10" placeholder="Base Fare" value={cityForm.baseFare} onChange={e => setCityForm({ ...cityForm, baseFare: e.target.value })} />
               <input className="w-full p-3 rounded-lg bg-black border border-white/10" placeholder="Per KM" value={cityForm.perKm} onChange={e => setCityForm({ ...cityForm, perKm: e.target.value })} />
             </div>
+
+            <select className="w-full p-3 rounded-lg bg-black border border-white/10" value={cityForm.demandLevel} onChange={e => setCityForm({ ...cityForm, demandLevel: e.target.value })}>
+              <option value="low">Demand: Low - Rush Kam Hai</option>
+              <option value="medium">Demand: Medium - Normal Rush</option>
+              <option value="high">Demand: High - Zyada Rush</option>
+            </select>
+
             <button onClick={handleAddCity} disabled={loading.city} className="w-full bg-[#A7E92F] text-black font-bold p-3 rounded-lg disabled:opacity-50">{loading.city ? 'Saving...' : isWorldwide ? 'Add Worldwide Zone 🌍' : `Add City in ${cityForm.country || '...'}`}</button>
           </div>
 
@@ -310,7 +306,7 @@ export default function AdminAddCityScreen({ notify }) {
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
               {loading.list ? <p className="text-white/40 text-sm">Loading...</p> : cities.map(city => (
                 <div key={city._id} className="flex justify-between items-center bg-black/50 p-3 rounded-lg border border-white/5">
-                  <div><p className="font-bold text-sm">{city.name} - {city.country} {city.isWorldwide ? '🌍' : ''}</p><p className="text-[11px] text-white/50">{city.isWorldwide ? 'Worldwide | Poori Duniya' : `${city.lat}, ${city.lng}`} | Base: {city.baseFare}</p></div>
+                  <div><p className="font-bold text-sm">{city.name} - {city.country} {city.isWorldwide ? '🌍' : ''}</p><p className="text-[11px] text-white/50">{city.isWorldwide ? 'Worldwide | Poori Duniya' : `${city.lat}, ${city.lng}`} | Base: {city.baseFare} | Demand: {city.demandLevel || city.demand || 'medium'}</p></div>
                   <button onClick={() => handleDeleteCity(city._id)} className="text-xs bg-red-500/10 text-red-400 px-3 py-1 rounded-full border border-red-500/20">Delete</button>
                 </div>
               ))}
