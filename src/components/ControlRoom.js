@@ -33,7 +33,6 @@ export function Shell({ screen, setScreen, role, onLogout, children }) {
         { key: 'sos-center', label: 'SOS Center', icon: AlertTriangle },
         { key: 'analytics', label: 'Analytics Report', icon: BarChart3 },
         { key: 'notifications', label: 'Notification', icon: Bell },
-        { key: 'bulk', label: 'Promo Code', icon: Bell },
       ] 
     },
   ];

@@ -15,7 +15,6 @@ import ComplaintsSupportDriver from './screens/ComplaintsSupportDriver';
 import CallLogs from './screens/CallLogs';
 import UsersHistory from './screens/UsersHistory';
 import Notifications from './screens/Notifications';
-import PromoCodes from './screens/PromoCodes';
 import RatingsReviewsMonitor from './screens/RatingsReviewsMonitor';
 import RoleSelectScreen from './screens/RoleSelectScreen';
 import SOSCenter from './screens/SOSCenter';
@@ -58,14 +57,11 @@ class ErrorBoundary extends React.Component {
 const SCREENS_MAP = {
   'dashboard': SuperAdminDashboard, 'super-admin': SuperAdminDashboard,
   'city-dashboard': CityDashboard, 
-  
-  // ===== FIXED: Driver Onboarding ke saare keys add kiye =====
   'city-onboarding': DriverOnboarding,
   'city-driver-onboarding': DriverOnboarding, 
-  'city-deiver-onboarding': DriverOnboarding, // purana typo support ke liye
-  'driver-onboarding': DriverOnboarding, // NEW - ye missing tha
+  'city-deiver-onboarding': DriverOnboarding,
+  'driver-onboarding': DriverOnboarding,
   'driver-onboard': DriverOnboarding,
-
   'city-performance': DriverPerformance,
   'city-driver-performance': DriverPerformance, 
   'city-vehicles': VehicleTypes,
@@ -87,23 +83,17 @@ const SCREENS_MAP = {
   'ratings': RatingsReviewsMonitor, 'rating-reviews-monitor': RatingsReviewsMonitor,
   'sos-center': SOSCenter, 'analytics': AnalyticsReports,
   'analytics-report': AnalyticsReports, 'notifications': Notifications,
-  'bulk': PromoCodes, 'promo-code': PromoCodes,
-
-  // ===== SHOP VERIFICATION =====
   'shop-requests': AdminShopVerification,
   'shop-top-settings': ShopTopSettings,
   'admin-shop-verification': AdminShopVerification,
   'shop-verification': AdminShopVerification,
   'admin-shop-verification-screen': AdminShopVerification,
   'shop-verification-screen': AdminShopVerification,
-
   'banners': AdminAddBanner,
   'banner-manager': AdminAddBanner,
-  // ===== 4 HISTORY SCREENS =====
   'shop-history': ShopLoginHistoryScreen,
   'shop-login-history': ShopLoginHistoryScreen,
   'shop-mode-history': ShopLoginHistoryScreen,
-
   'driver-history': DriverHistoryScreen,
   'ride-driver-history': DriverHistoryScreen,
   'drivers-history': DriverHistoryScreen,
