@@ -23,17 +23,13 @@ import SplashFrontScreen from './screens/SplashFrontScreen';
 import SuperAdminDashboard from './screens/SuperAdminDashboard';
 import UsersManagement from './screens/UsersManagement';
 import ZoneManagement from './screens/ZoneManagement';
-import AdminShowRoomVerificationScreen from './screens/AdminShowRoomVerificationScreen';
 import AdminShopVerification from './screens/AdminShopVerification';
 import ShopTopSettings from './screens/ShopTopSettings';
 import AdminAddBanner from './screens/AdminAddBanner';
 import AdminAddCityScreen from './screens/AdminAddCityScreen';
-import TruckRequestScreen from './screens/TruckRequestScreen';
 
 // ===== 4 HISTORY SCREENS ADDED =====
 import ShopLoginHistoryScreen from './screens/ShopLoginHistoryScreen';
-import TruckDriverHistoryScreen from './screens/TruckDriverHistoryScreen';
-import ShowRoomOwnerHistory from './screens/ShowRoomOwnerHistory';
 import DriverHistoryScreen from './screens/DriverHistoryScreen';
 
 const SECURE_ADMIN = {
@@ -93,15 +89,9 @@ const SCREENS_MAP = {
   'analytics-report': AnalyticsReports, 'notifications': Notifications,
   'bulk': PromoCodes, 'promo-code': PromoCodes,
 
-  // ===== SHOWROOM / SHOP VERIFICATION =====
+  // ===== SHOP VERIFICATION =====
   'shop-requests': AdminShopVerification,
   'shop-top-settings': ShopTopSettings,
-  'showroom-requests': AdminShowRoomVerificationScreen, // FIXED: ye missing tha
-  'showroom-request': AdminShowRoomVerificationScreen,
-  'show-room-request': AdminShowRoomVerificationScreen,
-  'showroom-verification': AdminShowRoomVerificationScreen,
-  'show-room-verification': AdminShowRoomVerificationScreen,
-  'admin-showroom-verification': AdminShowRoomVerificationScreen,
   'admin-shop-verification': AdminShopVerification,
   'shop-verification': AdminShopVerification,
   'admin-shop-verification-screen': AdminShopVerification,
@@ -109,25 +99,10 @@ const SCREENS_MAP = {
 
   'banners': AdminAddBanner,
   'banner-manager': AdminAddBanner,
-  'truck-verification': TruckRequestScreen,
-  'truck-verifications': TruckRequestScreen,
-  'truck-driver-verification': TruckRequestScreen,
-  'driver-verification': TruckRequestScreen,
-
   // ===== 4 HISTORY SCREENS =====
   'shop-history': ShopLoginHistoryScreen,
   'shop-login-history': ShopLoginHistoryScreen,
   'shop-mode-history': ShopLoginHistoryScreen,
-
-  'truck-history': TruckDriverHistoryScreen,
-  'truck-login-history': TruckDriverHistoryScreen,
-  'truck-driver-history': TruckDriverHistoryScreen,
-  'truck-mode-history': TruckDriverHistoryScreen,
-
-  'showroom-history': ShowRoomOwnerHistory,
-  'showroom-owner-history': ShowRoomOwnerHistory,
-  'showroom-login-history': ShowRoomOwnerHistory,
-  'show-room-history': ShowRoomOwnerHistory,
 
   'driver-history': DriverHistoryScreen,
   'ride-driver-history': DriverHistoryScreen,
