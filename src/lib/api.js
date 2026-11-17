@@ -1,17 +1,18 @@
-const configuredUrl = import.meta.env.VITE_API_URL || '';
+const configuredUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/["']/g, '');
 
 export const API_BASE_URL = configuredUrl.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
 export const API_URL = API_BASE_URL ? `${API_BASE_URL}/api` : '/api';
 export const SOCKET_URL = API_BASE_URL;
-export const API_KEY = import.meta.env.VITE_API_KEY || '';
+export const API_KEY = (import.meta.env.VITE_API_KEY || '').trim().replace(/["']/g, '');
 
 function normalizeApiPath(path) {
-  const pathWithQuery = String(path);
+  const pathWithQuery = String(path || '');
   const relativePath = pathWithQuery.replace(/^https?:\/\/[^/]+/i, '');
   const normalizedPath = relativePath
     .replace(/^(?:\/api)+(?=\/|$)/i, '')
     .replace(/^\/+/, '');
 
+  if (!normalizedPath) return API_URL;
   return `${API_URL}/${normalizedPath}`;
 }
 
@@ -45,6 +46,22 @@ export async function apiFetch(path, options = {}) {
     ...options,
     headers,
   });
+}
+
+// NEW: Ye wala seedha data dega, Response nahi dena parega
+export async function apiFetchJson(path, options = {}) {
+  const res = await apiFetch(path, options);
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+  if (!res.ok) {
+    throw new Error((data && data.message) || `API Error: ${res.status} ${res.statusText}`);
+  }
+  return data;
 }
 
 export const getCountries = () => apiFetch('/countries');
