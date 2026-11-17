@@ -4,7 +4,7 @@ import { ScreenFrame, SectionCard, StatCard, Badge } from '../components/Control
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 import GlobalImageViewer from '../components/GlobalImageViewer';
@@ -112,8 +112,8 @@ export default function SuperAdminDashboard({ notify, setScreen }) {
       try {
         // 1. Real countries aur zones alag se fetch karo - yehi 100% real honge
         const [zonesRes, countriesRes] = await Promise.all([
-          fetch(`${API_URL}/zones`).then(r=>r.ok?r.json():[]).catch(()=>[]),
-          fetch(`${API_URL}/countries`).then(r=>r.ok?r.json():[]).catch(()=>fetch(`${API_URL}/api/countries`).then(r=>r.ok?r.json():[]).catch(()=>[]))
+          apiFetch(`${API_URL}/zones`).then(r=>r.ok?r.json():[]).catch(()=>[]),
+          apiFetch(`${API_URL}/countries`).then(r=>r.ok?r.json():[]).catch(()=>[])
         ]);
 
         const zonesList = Array.isArray(zonesRes)? zonesRes : zonesRes?.zones || [];
@@ -138,7 +138,7 @@ export default function SuperAdminDashboard({ notify, setScreen }) {
         if (selectedCity) params.set('city', selectedCity);
         if (selectedCountry) params.set('country', selectedCountry);
         const query = params.toString();
-        const res = await fetch(`${API_URL}/super-admin/dashboard-stats${query? `?${query}` : ''}`);
+        const res = await apiFetch(`${API_URL}/super-admin/dashboard-stats${query? `?${query}` : ''}`);
         if (!res.ok) throw new Error(`Dashboard request failed (${res.status})`);
         const data = await res.json();
         if (!data.success) throw new Error(data.message || 'Dashboard data unavailable');

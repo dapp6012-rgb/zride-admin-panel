@@ -1,9 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
+import { API_URL, apiFetch } from '../lib/api'
 import { exportExcel } from '../utils/exportExcel'
 import ExcelExportButton from '../components/ExcelExportButton'
-
-const API_URL = "http://localhost:3000/api/rider"
 
 export default function UsersManagement() {
   const [users, setUsers] = useState([])
@@ -13,7 +12,7 @@ export default function UsersManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      const res = await fetch(API_URL)
+      const res = await apiFetch(`${API_URL}/rider`)
       const data = await res.json()
       setUsers(Array.isArray(data) ? data : data.riders || [])
     } catch (err) {
@@ -28,7 +27,7 @@ export default function UsersManagement() {
   const toggleBlock = async (id, currentStatus) => {
     const newStatus = currentStatus === "Active" ? "Blocked" : "Active"
     try {
-      const res = await fetch(`${API_URL}/${encodeURIComponent(id)}/status`, {
+      const res = await apiFetch(`${API_URL}/rider/${encodeURIComponent(id)}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus })

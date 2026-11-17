@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search, Store, Trash2 } from 'lucide-react';
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 
 const SHOP_TOP_API_URL = `${API_URL}/shops`;
 
@@ -14,7 +14,7 @@ async function readJsonResponse(response) {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(`${SHOP_TOP_API_URL}${path}`, {
+  const response = await apiFetch(`${SHOP_TOP_API_URL}${path}`, {
     ...options,
     headers: {
       'bypass-tunnel-reminder': 'true',

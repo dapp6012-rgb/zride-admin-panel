@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 
@@ -19,7 +19,7 @@ export default function CallLogs() {
   const fetchLogs = useCallback(async (isInitial = false) => {
     try {
       if (isInitial) setLoading(true);
-      const r = await fetch(`${API_URL}/call-logs/list?search=${encodeURIComponent(debouncedSearch)}`);
+      const r = await apiFetch(`${API_URL}/call-logs/list?search=${encodeURIComponent(debouncedSearch)}`);
       const d = await r.json();
       if (!r.ok || d.success === false) throw new Error(d.message || 'Could not load call logs');
       setLogs(Array.isArray(d.logs)? d.logs : []);

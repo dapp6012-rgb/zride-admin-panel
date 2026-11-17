@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 
@@ -17,7 +17,7 @@ export default function AdminAddCityScreen({ notify }) {
 
   const fetchCountries = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/countries`);
+      const res = await apiFetch(`${API_URL}/countries`);
       const data = await res.json();
       const list = Array.isArray(data) ? data : data.data || [];
       setCountries(list);
@@ -33,7 +33,7 @@ export default function AdminAddCityScreen({ notify }) {
   const fetchCities = useCallback(async () => {
     try {
       setLoading(l => ({ ...l, list: true }));
-      const res = await fetch(`${API_URL}/zones`);
+      const res = await apiFetch(`${API_URL}/zones`);
       const data = await res.json();
       setCities(Array.isArray(data) ? data : data.zones || data.data || []);
     } catch (e) { console.log(e) }
@@ -62,7 +62,7 @@ export default function AdminAddCityScreen({ notify }) {
         phoneLengthMax: maxLength,
         isWorldwide: isWorldwideCountry,
       };
-      const res = await fetch(`${API_URL}/countries`, {
+      const res = await apiFetch(`${API_URL}/countries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -151,7 +151,7 @@ export default function AdminAddCityScreen({ notify }) {
         geometry: { type: 'Polygon', coordinates: [ring] },
         area: { type: 'Polygon', coordinates: [ring] }
       };
-      const res = await fetch(`${API_URL}/zones`, {
+      const res = await apiFetch(`${API_URL}/zones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -169,7 +169,7 @@ export default function AdminAddCityScreen({ notify }) {
   const handleDeleteCity = async (id) => {
     if (!window.confirm('Delete this city?')) return;
     try {
-      await fetch(`${API_URL}/zones/${id}`, { method: 'DELETE' });
+      await apiFetch(`${API_URL}/zones/${id}`, { method: 'DELETE' });
       notify?.('City deleted 🗑️');
       await fetchCities();
     } catch (e) { alert(e.message) }
@@ -183,9 +183,9 @@ export default function AdminAddCityScreen({ notify }) {
 
     try {
       for (const city of relatedCities) {
-        await fetch(`${API_URL}/zones/${city._id}`, { method: 'DELETE' });
+        await apiFetch(`${API_URL}/zones/${city._id}`, { method: 'DELETE' });
       }
-      const res = await fetch(`${API_URL}/countries/${countryId}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API_URL}/countries/${countryId}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || data.message || 'Failed to delete country');
 

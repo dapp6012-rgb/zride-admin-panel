@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 import GlobalImageViewer from '../components/GlobalImageViewer';
@@ -20,7 +20,7 @@ export default function ComplaintsSupportDriver({ notify }) {
   const fetchComplaints = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/complaint/all`);
+      const res = await apiFetch(`${API_URL}/complaint/all`);
       const data = await res.json();
       setComplaints(data.complaints?.filter(c => c.role === 'driver') || []);
     } catch (e) {
@@ -36,7 +36,7 @@ export default function ComplaintsSupportDriver({ notify }) {
     if(!window.confirm("Resolve karna hai?")) return;
     setActionId(id);
     try {
-      const res = await fetch(`${API_URL}/complaint/${id}/resolve`, { method: 'PUT' });
+      const res = await apiFetch(`${API_URL}/complaint/${id}/resolve`, { method: 'PUT' });
       if(!res.ok) throw new Error('Failed');
       setComplaints(prev => prev.map(c => c._id === id? {...c, status: 'resolved' } : c));
       notify?.("Driver complaint resolved ✅");
@@ -48,7 +48,7 @@ export default function ComplaintsSupportDriver({ notify }) {
     if(!window.confirm("Delete karni hai? Permanent delete hoga!")) return;
     setActionId(id);
     try {
-      const res = await fetch(`${API_URL}/complaint/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API_URL}/complaint/${id}`, { method: 'DELETE' });
       if(!res.ok) throw new Error('Failed');
       setComplaints(prev => prev.filter(c => c._id!== id));
       notify?.("Complaint deleted 🗑️");

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
+import { API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
-const API_URL = 'http://localhost:3000';
 
 export default function VehicleTypes() {
   const [types, setTypes] = useState([]);
@@ -22,7 +22,7 @@ export default function VehicleTypes() {
   const fetchTypes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/vehicle-types`);
+      const res = await apiFetch(`${API_URL}/vehicle-types`);
       const data = await res.json();
       setTypes(Array.isArray(data) ? data : data.vehicleTypes || []);
     } catch (e) {
@@ -47,9 +47,9 @@ export default function VehicleTypes() {
     };
 
     const method = editingId ? 'PUT' : 'POST';
-    const url = editingId ? `${API_URL}/api/vehicle-types/${editingId}` : `${API_URL}/api/vehicle-types`;
+    const url = editingId ? `${API_URL}/vehicle-types/${editingId}` : `${API_URL}/vehicle-types`;
     
-    const res = await fetch(url, { 
+    const res = await apiFetch(url, {
       method, 
       headers: { 'Content-Type': 'application/json' }, 
       body: JSON.stringify(payload) 
@@ -80,7 +80,7 @@ export default function VehicleTypes() {
 
   const handleDelete = async (id) => { 
     if(confirm('Delete this vehicle?')){ 
-      await fetch(`${API_URL}/api/vehicle-types/${id}`, {method:'DELETE'}); 
+      await apiFetch(`${API_URL}/vehicle-types/${id}`, {method:'DELETE'});
       fetchTypes(); 
     } 
   };

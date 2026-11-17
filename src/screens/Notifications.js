@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 
 export default function Notifications({ notify }) {
   const [title, setTitle] = useState('');
@@ -15,7 +15,7 @@ export default function Notifications({ notify }) {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/notifications/send`, {
+      const res = await apiFetch(`${API_URL}/notifications/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: title.trim(), message: message.trim(), audience })

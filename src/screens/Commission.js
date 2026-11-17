@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-
-const API_URL = 'https://zride-texon.loca.lt/api/commission';
+import { API_URL, apiFetch } from '../lib/api';
 
 export default function Commission() {
   const [form, setForm] = useState({ 
@@ -20,17 +18,19 @@ export default function Commission() {
   const fetchSettings = async (type) => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}?userType=${type}`);
-      if (res.data) {
+      const res = await apiFetch(`${API_URL}/commission?userType=${encodeURIComponent(type)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
+      if (data) {
         setForm({
           userType: type,
-          commissionPrice: res.data.commissionPrice || '',
-          accountName: res.data.accountName || '',
-          accountNumber: res.data.accountNumber || '',
-          jazzcashNumber: res.data.jazzcashNumber || '',
-          easypaisaNumber: res.data.easypaisaNumber || '',
+          commissionPrice: data.commissionPrice || '',
+          accountName: data.accountName || '',
+          accountNumber: data.accountNumber || '',
+          jazzcashNumber: data.jazzcashNumber || '',
+          easypaisaNumber: data.easypaisaNumber || '',
         });
-        setSavedData(res.data);
+        setSavedData(data);
       }
     } catch (err) {
       console.log("No data yet for", type);
@@ -52,10 +52,10 @@ export default function Commission() {
     if (qrFile) fd.append('qrCode', qrFile);
 
     try {
-      const res = await axios.post(API_URL, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      setSavedData(res.data);
+      const res = await apiFetch(`${API_URL}/commission`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
+      setSavedData(data);
       alert("Save ho gaya!");
     } catch (err) {
       console.log(err);

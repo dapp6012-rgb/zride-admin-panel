@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { API_BASE_URL, API_URL } from "../lib/api";
+import { API_BASE_URL, API_URL, apiFetch } from "../lib/api";
 import GlobalImageViewer from "../components/GlobalImageViewer";
 
 const getShopImageUrl = (image) => {
@@ -36,24 +35,20 @@ export default function AdminShopVerification() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await axios.get(`${API_URL}/shops`, {
-        headers: headers,
-      });
-
-      console.log("Admin API Response:", res.data);
+      const res = await apiFetch(`${API_URL}/shops`, { headers });
+      const responseData = await res.json();
+      if (!res.ok) throw new Error(responseData.message || `Request failed (${res.status})`);
+      console.log("Admin API Response:", responseData);
 
       let data = [];
-      if (Array.isArray(res.data)) data = res.data;
-      else if (Array.isArray(res.data.shops)) data = res.data.shops;
-      else if (Array.isArray(res.data.data)) data = res.data.data;
+      if (Array.isArray(responseData)) data = responseData;
+      else if (Array.isArray(responseData.shops)) data = responseData.shops;
+      else if (Array.isArray(responseData.data)) data = responseData.data;
 
       setRequests(data);
     } catch (e) {
-      console.error("Fetch Error:", e.response?.data || e.message);
-      setError(
-        e.response?.data?.message ||
-          "Failed to load requests. Backend URL check karo: " + API_URL
-      );
+      console.error("Fetch Error:", e.message);
+      setError(e.message || "Failed to load requests. Backend URL check karo: " + API_URL);
       setRequests([]);
     }
     setLoading(false);
@@ -81,15 +76,17 @@ export default function AdminShopVerification() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await axios.put(
+      const res = await apiFetch(
         `${API_URL}/shops/${encodeURIComponent(id)}/status`,
-        { status: action === "approve" ? "approved" : "rejected" },
         {
-          headers: headers,
-        }
+          method: "PUT",
+          headers,
+          body: JSON.stringify({ status: action === "approve" ? "approved" : "rejected" }),
+        },
       );
-
-      console.log("Action Response:", res.data);
+      const responseData = await res.json();
+      if (!res.ok) throw new Error(responseData.message || `Request failed (${res.status})`);
+      console.log("Action Response:", responseData);
       setSuccessMsg(
         `Shop ${action}d successfully! User ke app me status auto "${action === "approve" ? "APPROVED" : "REJECTED"}" ho jayega.`
       );
@@ -98,8 +95,8 @@ export default function AdminShopVerification() {
 
       setTimeout(() => setSuccessMsg(""), 5000);
     } catch (e) {
-      console.error("Action Error:", e.response?.data || e.message);
-      alert(e.response?.data?.message || "Action Failed - Backend check karo");
+      console.error("Action Error:", e.message);
+      alert(e.message || "Action Failed - Backend check karo");
     }
     setActionLoading("");
   };

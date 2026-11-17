@@ -3,7 +3,7 @@ import {
   Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart,
   Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 import GlobalImageViewer from '../components/GlobalImageViewer';
@@ -24,7 +24,7 @@ export default function AnalyticsReport() {
   // City list - only once
   useEffect(() => {
     let active = true;
-    fetch(`${API_URL}/analytics/cities`)
+    apiFetch(`${API_URL}/analytics/cities`)
      .then(r => r.ok? r.json() : Promise.reject(`City list ${r.status}`))
      .then(d => { if (active && d.success) setCities(Array.isArray(d.cities)? d.cities : []); })
      .catch(() => { if (active) setCities([]); });
@@ -36,7 +36,7 @@ export default function AnalyticsReport() {
     let active = true;
     const cityQuery = selectedCity? `?city=${encodeURIComponent(selectedCity)}` : '';
     setLoading(true);
-    fetch(`${API_URL}/analytics${cityQuery}`)
+    apiFetch(`${API_URL}/analytics${cityQuery}`)
      .then(r => { if (!r.ok) throw new Error(`Analytics ${r.status}`); return r.json(); })
      .then(d => {
         if (!d.success) throw new Error(d.message || 'Could not load analytics');

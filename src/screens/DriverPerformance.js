@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ban, Check, Search, Star, Wallet, X } from 'lucide-react';
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 
@@ -100,7 +100,7 @@ export default function DriverPerformance() {
     const controller = new AbortController();
     async function fetchDrivers() {
       try {
-        const response = await fetch(`${API_URL}/driver/all`, { signal: controller.signal });
+        const response = await apiFetch(`${API_URL}/driver/all`, { signal: controller.signal });
         if (!response.ok) throw new Error(`Request failed (${response.status})`);
         const data = await response.json();
         if (!Array.isArray(data.drivers)) throw new Error('Unexpected response from driver API');

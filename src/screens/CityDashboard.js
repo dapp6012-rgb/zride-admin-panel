@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, MiniMap, ScreenFrame, SectionCard, StatCard, Badge } from '../components/ControlRoom';
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 import GlobalImageViewer from '../components/GlobalImageViewer';
@@ -16,7 +16,7 @@ export default function CityDashboard({ notify }) {
 
   const fetchCities = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/zones`);
+      const res = await apiFetch(`${API_URL}/zones`);
       if (!res.ok) throw new Error(`City list failed (${res.status})`);
       const data = await res.json();
       const zones = Array.isArray(data.zones)? data.zones : [];
@@ -42,7 +42,7 @@ export default function CityDashboard({ notify }) {
     if (!city) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/analytics?city=${encodeURIComponent(city)}`);
+      const res = await apiFetch(`${API_URL}/analytics?city=${encodeURIComponent(city)}`);
       if (!res.ok) throw new Error(`Analytics failed (${res.status})`);
       const data = await res.json();
       // REAL DATA from MongoDB

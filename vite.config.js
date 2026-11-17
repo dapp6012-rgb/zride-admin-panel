@@ -4,17 +4,20 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const apiTarget = (env.VITE_API_URL || 'https://zride-texon.loca.lt').replace(/\/api\/?$/, '');
+  const apiTarget = env.VITE_API_URL
+    ? env.VITE_API_URL.replace(/\/api\/?$/i, '').replace(/\/+$/, '')
+    : '';
+  const proxy = apiTarget
+    ? {
+        '/api': { target: apiTarget, changeOrigin: true },
+        '/socket.io': { target: apiTarget, changeOrigin: true, ws: true },
+      }
+    : {};
 
   return {
     base: './',
     plugins: [react(), tailwindcss()],
-    server: {
-      proxy: {
-        '/api': { target: apiTarget, changeOrigin: true },
-        '/socket.io': { target: apiTarget, changeOrigin: true, ws: true },
-      },
-    },
+    server: { proxy },
     esbuild: {
       loader: 'jsx',
       include: /src\/.*\.jsx?$/,

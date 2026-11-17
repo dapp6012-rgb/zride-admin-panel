@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import axios from "axios";
-import { API_URL } from "../lib/api";
+import { API_URL, apiFetch } from "../lib/api";
 
 const DriverHistoryScreen = () => {
   const [history, setHistory] = useState([]);
@@ -26,8 +25,15 @@ const DriverHistoryScreen = () => {
 
       for (const endpoint of endpoints) {
         try {
-          const response = await axios.get(endpoint, { headers });
-          const data = response.data;
+          const response = await apiFetch(endpoint, { headers });
+          if (response.status === 404) {
+            lastError = new Error("Driver history endpoint was not found");
+            continue;
+          }
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data?.message || `Request failed (${response.status})`);
+          }
           const drivers = Array.isArray(data)
             ? data
             : data?.drivers || data?.data || data?.history;
@@ -39,7 +45,7 @@ const DriverHistoryScreen = () => {
           return;
         } catch (requestError) {
           lastError = requestError;
-          if (requestError.response?.status !== 404) throw requestError;
+          throw requestError;
         }
       }
 
@@ -47,7 +53,7 @@ const DriverHistoryScreen = () => {
       setError("");
       console.warn("Driver history endpoints returned 404:", lastError?.message);
     } catch (requestError) {
-      const message = requestError.response?.data?.message || requestError.message;
+      const message = requestError.message;
       setError(`Driver history load nahi hui: ${message}`);
       console.error("Driver history fetch failed:", message);
     } finally {

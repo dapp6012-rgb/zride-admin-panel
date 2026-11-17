@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API_BASE_URL as API_URL } from "../lib/api";
+import { API_BASE_URL as API_URL, apiFetch } from "../lib/api";
 import { exportExcel } from "../utils/exportExcel";
 import ExcelExportButton from '../components/ExcelExportButton';
 import { MapContainer, Polygon, TileLayer, useMapEvents } from "react-leaflet";
@@ -17,7 +17,7 @@ function LegacyZoneManagement({ notify }) {
   const fetchZones = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/zones`);
+      const res = await apiFetch(`${API_URL}/api/zones`);
       const data = await res.json();
       setZones(Array.isArray(data.zones) ? data.zones : Array.isArray(data) ? data : []);
     } catch (e) {
@@ -48,7 +48,7 @@ function LegacyZoneManagement({ notify }) {
       const method = editingId ? "PUT" : "POST";
       const url = editingId ? `${API_URL}/api/zones/${editingId}` : `${API_URL}/api/zones`;
       
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -75,7 +75,7 @@ function LegacyZoneManagement({ notify }) {
   const handleDelete = async (id) => {
     if (!confirm("Delete this zone?")) return;
     try {
-      const res = await fetch(`${API_URL}/api/zones/${id}`, { method: "DELETE" });
+      const res = await apiFetch(`${API_URL}/api/zones/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
       notify?.("Zone Deleted");
       fetchZones();
@@ -214,7 +214,7 @@ export default function ZoneManagement({ notify }) {
   const fetchZones = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/zones?includeInactive=true`, {
+      const response = await apiFetch(`${API_URL}/api/zones?includeInactive=true`, {
         headers: { "bypass-tunnel-reminder": "true" },
       });
       if (!response.ok) throw new Error(`Zones load failed (${response.status})`);
@@ -268,7 +268,7 @@ export default function ZoneManagement({ notify }) {
 
     setSaving(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         editingId ? `${API_URL}/api/zones/${editingId}` : `${API_URL}/api/zones`,
         {
           method: editingId ? "PUT" : "POST",
@@ -317,7 +317,7 @@ export default function ZoneManagement({ notify }) {
   const handleDelete = async (zone) => {
     if (!window.confirm(`Delete "${zone.name}"?`)) return;
     try {
-      const response = await fetch(`${API_URL}/api/zones/${zone._id}`, {
+      const response = await apiFetch(`${API_URL}/api/zones/${zone._id}`, {
         method: "DELETE",
         headers: { "bypass-tunnel-reminder": "true" },
       });

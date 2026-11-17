@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Badge, DataScreen, SectionCard, ScreenFrame } from '../components/ControlRoom';
-import { API_BASE_URL as API_URL } from '../lib/api';
+import { API_BASE_URL as API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 import { Button } from '../components/ControlRoom';
@@ -17,7 +17,7 @@ export default function DriverOnboarding({ notify }) {
 
   const fetchDrivers = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/drivers`);
+      const res = await apiFetch(`${API_URL}/api/admin/drivers`);
       const data = await res.json();
       const list = data.drivers || data.data || [];
       setApplicants(list);
@@ -50,7 +50,7 @@ export default function DriverOnboarding({ notify }) {
     
     try {
       console.log('Approving:', driverId, '->', nextStatus);
-      const res = await fetch(`${API_URL}/api/admin/drivers/${encodeURIComponent(driverId)}/approve`, {
+      const res = await apiFetch(`${API_URL}/api/admin/drivers/${encodeURIComponent(driverId)}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus })
@@ -79,7 +79,7 @@ export default function DriverOnboarding({ notify }) {
     clearInterval(intervalRef.current);
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/drivers/${encodeURIComponent(driverId)}`, {
+      const res = await apiFetch(`${API_URL}/api/admin/drivers/${encodeURIComponent(driverId)}`, {
         method: 'DELETE',
       });
       const result = await res.json();

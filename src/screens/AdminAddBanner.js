@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { API_URL, API_BASE_URL } from '../lib/api';
+import { API_URL, API_BASE_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 import GlobalImageViewer from '../components/GlobalImageViewer';
@@ -15,7 +15,7 @@ async function getWithRetry(url, attempts = 4) {
   let lastError;
   for (let i = 0; i < attempts; i++) {
     try {
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       if (res.ok) return res;
       lastError = new Error(`Backend returned ${res.status}`);
       if (![502, 503, 504].includes(res.status)) throw lastError;
@@ -45,7 +45,7 @@ export default function AdminAddBanner() {
 
   const fetchCities = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/zones`);
+      const res = await apiFetch(`${API_URL}/zones`);
       const data = await res.json();
       const list = Array.isArray(data)? data : data.zones || data.data || [];
       const cityNames = [...new Set(list.map(c => c.name || c.city).filter(Boolean))];
@@ -122,7 +122,7 @@ export default function AdminAddBanner() {
       fd.append('image', form.image); // backend same field pe file lega, image ya video
 
       setBackendStatus('connecting');
-      const res = await fetch(`${API_URL}/banners`, { method: 'POST', body: fd });
+      const res = await apiFetch(`${API_URL}/banners`, { method: 'POST', body: fd });
       const data = await res.json().catch(()=>({}));
       if (res.ok) {
         setMessage(`✅ ${form.type === 'video'? 'Video Ad' : 'Banner'} Added in ${form.city}!`);
@@ -148,7 +148,7 @@ export default function AdminAddBanner() {
     if (!window.confirm('Delete this banner?')) return;
     setDeletingId(id);
     try {
-      const res = await fetch(`${API_URL}/banners/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API_URL}/banners/${id}`, { method: 'DELETE' });
       if (res.ok) await fetchBanners();
       else setMessage('Failed to delete banner');
     } catch (e) { setMessage('Delete failed, retry...'); }

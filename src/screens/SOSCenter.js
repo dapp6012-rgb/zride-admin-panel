@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
-import { API_URL, SOCKET_URL } from '../lib/api';
+import { API_URL, SOCKET_URL, apiFetch } from '../lib/api';
 
 export default function SOSCenter({ notify }) {
   const [sosList, setSosList] = useState([]);
@@ -12,7 +12,7 @@ export default function SOSCenter({ notify }) {
 
   const fetchSOS = async () => {
     try {
-      const res = await fetch(`${API_URL}/sos/list?status=${filter}`);
+      const res = await apiFetch(`${API_URL}/sos/list?status=${filter}`);
       const data = await res.json();
       if (data.success) {
         const alerts = Array.isArray(data.sos)? data.sos : [];
@@ -70,7 +70,7 @@ export default function SOSCenter({ notify }) {
 
   const handleResolve = async (sosId) => {
     try {
-      const res = await fetch(`${API_URL}/sos/resolve`, {
+      const res = await apiFetch(`${API_URL}/sos/resolve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sosId, resolvedBy: 'admin' })

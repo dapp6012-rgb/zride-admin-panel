@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import axios from "axios";
-import { API_BASE_URL, API_URL } from "../lib/api";
+import { API_BASE_URL, API_URL, apiFetch } from "../lib/api";
 
 const getProfileImageUrl = image => {
   if (!image || typeof image !== "string") return "";
@@ -18,16 +17,17 @@ const ShopLoginHistoryScreen = () => {
     if (showLoading) setLoading(true);
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const response = await axios.get(`${API_URL}/shops/history`, {
-        params: { role: "shop" },
+      const response = await apiFetch(`${API_URL}/shops/history?role=shop`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      const shops = response.data.shops;
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || `Request failed (${response.status})`);
+      const shops = data.shops;
       if (!Array.isArray(shops)) throw new Error("Server returned an invalid shop history list");
       setHistory(shops);
       setError("");
     } catch (requestError) {
-      const message = requestError.response?.data?.message || requestError.message;
+      const message = requestError.message;
       setError(`Shop history load nahi hui: ${message}`);
       console.error("Shop history fetch failed:", message);
     } finally {

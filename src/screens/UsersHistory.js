@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 
@@ -13,7 +13,7 @@ export default function UsersHistory() {
     let active = true;
     const fetchRiders = async () => {
       try {
-        const response = await fetch(`${API_URL}/rider/all`);
+        const response = await apiFetch(`${API_URL}/rider/all`);
         if (!response.ok) throw new Error("Riders load nahi ho sake");
         const data = await response.json();
         if (active) {

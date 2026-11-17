@@ -1,57 +1,71 @@
-const configuredUrl = import.meta.env.VITE_API_URL || 'https://zride-texon.loca.lt';
+const configuredUrl = import.meta.env.VITE_API_URL || '';
 
-export const API_BASE_URL = configuredUrl.replace(/\/api\/?$/, '').replace(/\/+$/, '');
-export const API_URL = `${API_BASE_URL}/api`;
+export const API_BASE_URL = configuredUrl.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
+export const API_URL = API_BASE_URL ? `${API_BASE_URL}/api` : '/api';
 export const SOCKET_URL = API_BASE_URL;
-export const API_KEY = import.meta.env.VITE_API_KEY || 'ZRIDE-X9K2-M7Q8-P4V2-2026-SECURE';
+export const API_KEY = import.meta.env.VITE_API_KEY || '';
 
-// Key ko header me daalne ke liye
+function normalizeApiPath(path) {
+  const pathWithQuery = String(path);
+  const relativePath = pathWithQuery.replace(/^https?:\/\/[^/]+/i, '');
+  const normalizedPath = relativePath
+    .replace(/^(?:\/api)+(?=\/|$)/i, '')
+    .replace(/^\/+/, '');
+
+  return `${API_URL}/${normalizedPath}`;
+}
+
 export function getHeaders() {
   return {
-    "Content-Type": "application/json",
-    "x-api-key": API_KEY,
+    'Content-Type': 'application/json',
+    'x-api-key': API_KEY,
   };
 }
 
-// Har request isi se jayegi, taake key har baar saath jaye
-// Aur /api/api wala masla bhi khud hi fix ho jayega
 export async function apiFetch(path, options = {}) {
-  let cleanPath = path.replace(/^\/api/, '');
-  if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
-
-  const res = await fetch(`${API_URL}${cleanPath}`, {
-    ...options,
-    headers: { ...getHeaders(), ...(options.headers || {}) },
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Request failed: ${res.status}`);
+  if (!API_BASE_URL) {
+    throw new Error('VITE_API_URL is not configured. Set it in your local environment.');
+  }
+  if (!API_KEY) {
+    throw new Error('VITE_API_KEY is not configured. Set it in your local environment.');
   }
 
-  const contentType = res.headers.get("content-type") || "";
-  if (contentType.includes("application/json")) return res.json();
-  return res.text();
+  const headers = new Headers(options.headers || {});
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+
+  headers.set('bypass-tunnel-reminder', 'true');
+  if (isFormData) {
+    headers.delete('Content-Type');
+  } else if (typeof options.body === 'string' && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  headers.set('x-api-key', API_KEY);
+
+  return fetch(normalizeApiPath(path), {
+    ...options,
+    headers,
+  });
 }
 
-// --- COUNTRIES ---
-export const getCountries = () => apiFetch(`/countries`);
+export const getCountries = () => apiFetch('/countries');
+export const getShops = () => apiFetch('/shops');
+export const getPendingShops = () => apiFetch('/shops?status=pending');
+export const getShopById = id => apiFetch(`/shops/${id}`);
+export const approveShop = id => apiFetch(`/shops/${id}/approve`, { method: 'POST' });
+export const rejectShop = (id, reason) => apiFetch(`/shops/${id}/reject`, {
+  method: 'POST',
+  body: JSON.stringify({ reason: reason || 'Rejected by admin' }),
+});
+export const updateShopStatus = (id, status) => apiFetch(`/shops/${id}/status`, {
+  method: 'PUT',
+  body: JSON.stringify({ status }),
+});
 
-// --- SHOPS ---
-export const getShops = () => apiFetch(`/shops`);
-export const getPendingShops = () => apiFetch(`/shops?status=pending`);
-export const getShopById = (id) => apiFetch(`/shops/${id}`);
-export const approveShop = (id) => apiFetch(`/shops/${id}/approve`, { method: "POST" });
-export const rejectShop = (id, reason) => apiFetch(`/shops/${id}/reject`, { method: "POST", body: JSON.stringify({ reason: reason || "Rejected by admin" }) });
-export const updateShopStatus = (id, status) => apiFetch(`/shops/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) });
+export const getDrivers = () => apiFetch('/drivers');
+export const getRiders = () => apiFetch('/riders');
+export const getUsers = () => apiFetch('/users');
 
-// --- DRIVERS / RIDERS / USERS ---
-export const getDrivers = () => apiFetch(`/drivers`);
-export const getRiders = () => apiFetch(`/riders`);
-export const getUsers = () => apiFetch(`/users`);
-
-// --- DASHBOARD ---
-export const getDashboardStats = () => apiFetch(`/super-admin/dashboard-stats`);
-export const getAdminStats = () => apiFetch(`/super-admin/dashboard-stats`);
+export const getDashboardStats = () => apiFetch('/super-admin/dashboard-stats');
+export const getAdminStats = () => apiFetch('/super-admin/dashboard-stats');
 
 export default apiFetch;

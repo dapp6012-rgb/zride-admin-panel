@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { API_URL } from '../lib/api';
+import { API_URL, apiFetch } from '../lib/api';
 import { exportExcel } from '../utils/exportExcel';
 import ExcelExportButton from '../components/ExcelExportButton';
 
@@ -13,7 +13,7 @@ export default function RatingsReviewsMonitor(){
   const loadRatings = async () => {
     try {
       setLoading(true);
-      const r = await fetch(`${API_URL}/ratings/list?search=${encodeURIComponent(search)}&filter=${filter}`);
+      const r = await apiFetch(`${API_URL}/ratings/list?search=${encodeURIComponent(search)}&filter=${filter}`);
       const d = await r.json();
       if (!r.ok || !d.success) throw new Error(d.message || 'Could not load ratings');
       setRatings(Array.isArray(d.ratings) ? d.ratings : []);
@@ -34,7 +34,7 @@ export default function RatingsReviewsMonitor(){
   const handleDelete = async (id) => {
     if(!window.confirm("Delete this review?")) return;
     try {
-      const res = await fetch(`${API_URL}/ratings/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API_URL}/ratings/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if(!res.ok) throw new Error(data.message);
       setRatings(prev => prev.filter(x => (x._id || x.id) !== id));
